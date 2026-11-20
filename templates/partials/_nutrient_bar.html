@@ -1,0 +1,39 @@
+{% comment %}
+  Context variables:
+    nutrient_name  — str, e.g. "Protein"
+    consumed       — Decimal
+    target         — Decimal
+    unit           — str, e.g. "g"
+    status         — str: "red" | "amber" | "green" | "blue"
+    pct            — float (0–100+)
+{% endcomment %}
+<div class="nutrient-bar nutrient-bar--{{ status }}" role="group" aria-label="{{ nutrient_name }} progress">
+  <div class="nutrient-bar__header">
+    <span class="nutrient-bar__name">{{ nutrient_name }}</span>
+    <span class="nutrient-bar__values">
+      <span class="nutrient-bar__consumed">{{ consumed|floatformat:1 }}</span>
+      <span class="nutrient-bar__sep"> / </span>
+      <span class="nutrient-bar__target">{{ target|floatformat:1 }} {{ unit }}</span>
+    </span>
+  </div>
+  <div class="nutrient-bar__track" role="progressbar"
+       aria-valuenow="{{ pct|floatformat:0 }}"
+       aria-valuemin="0"
+       aria-valuemax="100">
+    <div class="nutrient-bar__fill nutrient-bar__fill--{{ status }}"
+         style="width: {% if pct > 100 %}100{% else %}{{ pct|floatformat:0 }}{% endif %}%;">
+    </div>
+  </div>
+  <div class="nutrient-bar__footer">
+    <span class="nutrient-bar__pct">{{ pct|floatformat:0 }}%</span>
+    {% if status == "red" %}
+      <span class="nutrient-bar__hint nutrient-bar__hint--red">Needs attention</span>
+    {% elif status == "amber" %}
+      <span class="nutrient-bar__hint nutrient-bar__hint--amber">Getting there</span>
+    {% elif status == "green" %}
+      <span class="nutrient-bar__hint nutrient-bar__hint--green">On track 🌿</span>
+    {% elif status == "blue" %}
+      <span class="nutrient-bar__hint nutrient-bar__hint--blue">Exceeded</span>
+    {% endif %}
+  </div>
+</div>

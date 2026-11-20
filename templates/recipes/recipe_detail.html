@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ recipe.title }} — Sproutly{% endblock %}
+
+{% block extra_head %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<div class="recipe-detail-page container" style="max-width: 1050px; padding-bottom: 60px;">
+
+  <!-- ══════════════════════════════════
+       HERO CARD (Yellow #F7C548 from Mockup)
+  ═══════════════════════════════════════ -->
+  <div class="card-neo" style="background-color: var(--clr-yellow); padding: 32px 36px; border-radius: var(--radius-card); border: var(--border-thick); margin-bottom: 28px; display: flex; align-items: center; gap: 28px;">
+    
+    <!-- Mascot Avatar / Image -->
+    <div style="flex-shrink: 0; width: 110px; height: 110px; display: flex; align-items: center; justify-content: center;">
+      {% if recipe.image %}
+        <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}" style="width: 100px; height: 100px; border-radius: 20px; border: var(--border-thick); object-fit: cover;">
+      {% elif recipe.card_avatar == 'tofu' %}
+        <svg width="90" height="90" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Tofu avatar">
+          <rect x="12" y="12" width="46" height="46" rx="14" fill="#FFFDF8" stroke="#2B2625" stroke-width="2.5"/>
+          <circle cx="27" cy="33" r="2.5" fill="#2B2625"/>
+          <circle cx="43" cy="33" r="2.5" fill="#2B2625"/>
+          <path d="M30 40 Q35 45 40 40" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      {% elif recipe.card_avatar == 'tomato' %}
+        <svg width="90" height="90" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Tomato avatar">
+          <path d="M35 11 L31 18 L24 16 L29 22 L24 26 L32 24 L35 27 L38 24 L46 26 L41 22 L46 16 L39 18 Z" fill="#3E6B27" stroke="#2B2625" stroke-width="2"/>
+          <circle cx="35" cy="40" r="22" fill="#E55B3C" stroke="#2B2625" stroke-width="2.5"/>
+          <circle cx="28" cy="38" r="2.5" fill="#2B2625"/>
+          <circle cx="42" cy="38" r="2.5" fill="#2B2625"/>
+          <path d="M31 46 Q35 50 39 46" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      {% else %}
+        <svg width="90" height="90" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Bowl avatar">
+          <ellipse cx="35" cy="28" rx="18" ry="12" fill="#FFFDF8" stroke="#2B2625" stroke-width="2.5"/>
+          <path d="M16 28 C16 46 24 53 35 53 C46 53 54 46 54 28 Z" fill="#3697A5" stroke="#2B2625" stroke-width="2.5"/>
+          <circle cx="29" cy="39" r="2" fill="#2B2625"/>
+          <circle cx="41" cy="39" r="2" fill="#2B2625"/>
+          <path d="M32 44 Q35 47 38 44" stroke="#2B2625" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+      {% endif %}
+    </div>
+
+    <!-- Title & Details -->
+    <div style="flex: 1;">
+      <!-- Time & Diet Badge -->
+      <div style="margin-bottom: 8px;">
+        <span style="display: inline-flex; align-items: center; background: #FFFFFF; border: var(--border-thick); border-radius: var(--radius-full); padding: 4px 16px; font-family: var(--font-display); font-weight: 800; font-size: 0.88rem; color: var(--clr-dark);">
+          {{ recipe.total_time|default:"25" }} min · {{ recipe.diet_type }}
+        </span>
+      </div>
+
+      <!-- Title -->
+      <h1 style="font-family: var(--font-display); font-weight: 900; font-size: clamp(2.2rem, 4vw, 3rem); color: var(--clr-dark); margin: 0 0 14px 0; line-height: 1.15;">
+        {{ recipe.title }}
+      </h1>
+
+      <!-- Nutrient Chips -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        {% if recipe.nutrition.protein %}
+          <span style="display: inline-flex; align-items: center; background: #FFFFFF; border: var(--border-thick); border-radius: var(--radius-full); padding: 4px 16px; font-family: var(--font-display); font-weight: 800; font-size: 0.9rem; color: var(--clr-dark);">
+            {{ recipe.nutrition.protein|floatformat:0 }}g protein
+          </span>
+        {% endif %}
+        {% if recipe.nutrition.iron %}
+          <span style="display: inline-flex; align-items: center; background: #FFFFFF; border: var(--border-thick); border-radius: var(--radius-full); padding: 4px 16px; font-family: var(--font-display); font-weight: 800; font-size: 0.9rem; color: var(--clr-dark);">
+            {{ recipe.nutrition.iron|floatformat:0 }}mg iron
+          </span>
+        {% endif %}
+        {% if recipe.nutrition.fiber %}
+          <span style="display: inline-flex; align-items: center; background: #FFFFFF; border: var(--border-thick); border-radius: var(--radius-full); padding: 4px 16px; font-family: var(--font-display); font-weight: 800; font-size: 0.9rem; color: var(--clr-dark);">
+            {{ recipe.nutrition.fiber|floatformat:0 }}g fiber
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Author edit action -->
+    {% if user.is_authenticated and recipe.author == user %}
+      <div>
+        <a href="{% url 'recipe_edit' recipe.slug %}" class="btn btn-outline btn--pill" style="background: #FFFFFF;">
+          Edit recipe
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <!-- ══════════════════════════════════
+       TWO-COLUMN LAYOUT
+  ═══════════════════════════════════════ -->
+  <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 28px; align-items: start;">
+
+    <!-- LEFT: Ingredients + Method -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+
+      <!-- Ingredients Card -->
+      <section class="card-neo" style="background: #FFFFFF; padding: 28px 32px; border-radius: var(--radius-card); border: var(--border-thick);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.45rem; color: var(--clr-dark); margin: 0;">
+            Ingredients
+          </h2>
+
+          <!-- Servings Stepper Pill -->
+          <div style="display: inline-flex; align-items: center; background: var(--clr-yellow); border: var(--border-thick); border-radius: var(--radius-full); overflow: hidden; padding: 3px 6px;">
+            <button type="button" id="dec-servings" style="background: none; border: none; font-size: 1.2rem; font-weight: 900; padding: 0 10px; cursor: pointer; color: var(--clr-dark);">−</button>
+            <span id="servings-display" style="font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; padding: 0 4px;">{{ recipe.servings }} servings</span>
+            <button type="button" id="inc-servings" style="background: none; border: none; font-size: 1.2rem; font-weight: 900; padding: 0 10px; cursor: pointer; color: var(--clr-dark);">+</button>
+          </div>
+        </div>
+
+        <!-- Ingredients List with Dotted Leaders -->
+        <ul id="ingredient-list" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px;">
+          {% for ri in recipe.recipe_ingredients.all %}
+            <li class="ingredient-row-item"
+                data-base-grams="{{ ri.quantity_grams }}"
+                data-base-servings="{{ recipe.servings }}"
+                style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px dotted #D1C9BA; padding-bottom: 8px;">
+              <span style="font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; color: var(--clr-dark);">
+                {{ ri.ingredient.name }}
+              </span>
+              <span class="ingredient-amount-val" style="font-family: var(--font-display); font-weight: 800; font-size: 0.98rem; color: var(--clr-dark);">
+                {% if ri.display_text %}
+                  {{ ri.display_text }}
+                {% else %}
+                  {{ ri.quantity_grams|floatformat:0 }} g
+                {% endif %}
+              </span>
+            </li>
+          {% empty %}
+            <li style="color: var(--clr-text-muted); font-weight: 600;">No ingredients listed.</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Method Card -->
+      <section class="card-neo" style="background: #FFFFFF; padding: 28px 32px; border-radius: var(--radius-card); border: var(--border-thick);">
+        <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.45rem; color: var(--clr-dark); margin: 0 0 20px 0;">
+          Method
+        </h2>
+
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+          {% for step in recipe.instructions_list %}
+            <div style="display: flex; gap: 16px; align-items: flex-start;">
+              <span style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--clr-yellow); border: var(--border-thick); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 900; font-size: 0.95rem; color: var(--clr-dark); flex-shrink: 0; margin-top: 2px;">
+                {{ forloop.counter }}
+              </span>
+              <p style="margin: 0; font-size: 1.02rem; font-weight: 600; line-height: 1.45; color: var(--clr-dark);">
+                {{ step }}
+              </p>
+            </div>
+          {% empty %}
+            <p style="margin: 0; font-size: 1.02rem; font-weight: 600; line-height: 1.45; color: var(--clr-dark);">
+              {{ recipe.instructions }}
+            </p>
+          {% endfor %}
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT: Nutrition & Log Meal Cards -->
+    <aside style="display: flex; flex-direction: column; gap: 24px;">
+
+      <!-- Per Serving Nutrition Card (Teal #3697A5) -->
+      <div class="card-neo" style="background-color: var(--clr-teal); border: var(--border-thick); border-radius: var(--radius-card); padding: 26px 28px; color: var(--clr-dark);">
+        <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.35rem; color: var(--clr-dark); margin: 0 0 20px 0;">
+          Per serving
+        </h2>
+
+        <!-- Calories -->
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Calories</span>
+            <span><span id="detail-calories">{{ recipe.nutrition.calories|floatformat:0 }}</span> kcal</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div style="height: 100%; background-color: var(--clr-yellow); width: 45%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <!-- Protein -->
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Protein</span>
+            <span><span id="detail-protein">{{ recipe.nutrition.protein|floatformat:0 }}</span> g</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div style="height: 100%; background-color: #E8954A; width: 60%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <!-- Iron -->
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Iron</span>
+            <span><span id="detail-iron">{{ recipe.nutrition.iron|floatformat:0 }}</span> mg</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div style="height: 100%; background-color: var(--clr-coral); width: 40%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <!-- Fiber -->
+        <div style="margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Fiber</span>
+            <span><span id="detail-fiber">{{ recipe.nutrition.fiber|floatformat:0 }}</span> g</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div style="height: 100%; background-color: var(--clr-sage); width: 35%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add to Meal Log Card (Coral Red #E55B3C) -->
+      <div class="card-neo" style="background-color: var(--clr-coral); border: var(--border-thick); border-radius: var(--radius-card); padding: 26px 28px; color: var(--clr-dark);">
+        {% if user.is_authenticated %}
+          <form id="log-meal-form" novalidate style="display: flex; flex-direction: column; gap: 14px;">
+            {% csrf_token %}
+            <input type="hidden" name="recipe_id" value="{{ recipe.id }}">
+            <input type="hidden" name="servings" id="log-servings-val" value="1">
+
+            <!-- Date -->
+            <div>
+              <label class="form-label" for="log-date" style="font-weight: 800; font-size: 0.92rem; margin-bottom: 6px; display: block;">Date</label>
+              <input
+                type="date"
+                id="log-date"
+                name="date"
+                class="form-control form-control--pill"
+                value="{% now 'Y-m-d' %}"
+                style="height: 46px; background: #FFFFFF; font-weight: 700;"
+              >
+            </div>
+
+            <!-- Meal -->
+            <div>
+              <label class="form-label" for="log-meal-type" style="font-weight: 800; font-size: 0.92rem; margin-bottom: 6px; display: block;">Meal</label>
+              <select id="log-meal-type" name="meal_type" class="form-control form-control--pill goals-table__select" style="height: 46px; background: #FFFFFF;">
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner" selected>Dinner</option>
+                <option value="snack">Snack</option>
+              </select>
+            </div>
+
+            <!-- Add to my meals button -->
+            <button type="submit" class="btn btn-dark btn--pill" style="height: 48px; font-size: 1rem; margin-top: 8px;">
+              Add to my meals
+            </button>
+
+            <!-- Save to favorites button -->
+            <button
+              type="button"
+              class="btn btn-outline btn--pill favorite-btn"
+              id="favorite-btn"
+              data-recipe-id="{{ recipe.id }}"
+              style="height: 46px; background: #FFFFFF; font-size: 0.95rem; font-weight: 800;"
+            >
+              {% if is_favorited %}♥ In favorites{% else %}♡ Save to favorites{% endif %}
+            </button>
+
+            <div id="log-feedback" style="font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; text-align: center;"></div>
+          </form>
+        {% else %}
+          <div style="text-align: center; padding: 12px 0;">
+            <p style="font-weight: 800; font-size: 1.05rem; margin-bottom: 12px;">Want to log this meal?</p>
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-dark btn--pill btn--full-width">
+              Log in to track
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // ── Servings Live Rescaling ────────────────────────────────
+  const baseServings = parseFloat("{{ recipe.servings|default:1 }}") || 1;
+  let currentServings = baseServings;
+
+  const displayEl = document.getElementById('servings-display');
+  const decBtn = document.getElementById('dec-servings');
+  const incBtn = document.getElementById('inc-servings');
+  const logServingsInput = document.getElementById('log-servings-val');
+
+  const baseCal = parseFloat("{{ recipe.nutrition.calories|default:0 }}") || 0;
+  const baseProt = parseFloat("{{ recipe.nutrition.protein|default:0 }}") || 0;
+  const baseIron = parseFloat("{{ recipe.nutrition.iron|default:0 }}") || 0;
+  const baseFiber = parseFloat("{{ recipe.nutrition.fiber|default:0 }}") || 0;
+
+  function updateServings(newS) {
+    if (newS < 1) newS = 1;
+    currentServings = newS;
+    if (displayEl) displayEl.textContent = newS + (newS === 1 ? ' serving' : ' servings');
+    if (logServingsInput) logServingsInput.value = (newS / baseServings).toFixed(2);
+
+    // Rescale ingredient amounts
+    document.querySelectorAll('.ingredient-row-item').forEach(row => {
+      const baseGrams = parseFloat(row.dataset.baseGrams);
+      if (baseGrams) {
+        const scaledGrams = Math.round((baseGrams / baseServings) * newS);
+        const amtEl = row.querySelector('.ingredient-amount-val');
+        if (amtEl && !row.dataset.hasCustomText) {
+          amtEl.textContent = scaledGrams + ' g';
+        }
+      }
+    });
+  }
+
+  if (decBtn) decBtn.addEventListener('click', () => updateServings(currentServings - 1));
+  if (incBtn) incBtn.addEventListener('click', () => updateServings(currentServings + 1));
+
+  // ── Add to Meal Log AJAX ──────────────────────────────────
+  const logForm = document.getElementById('log-meal-form');
+  const logFeedback = document.getElementById('log-feedback');
+
+  if (logForm) {
+    logForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const dateVal = document.getElementById('log-date').value;
+      const mealType = document.getElementById('log-meal-type').value;
+      const servingsVal = logServingsInput ? logServingsInput.value : 1;
+
+      try {
+        const res = await fetch('/api/logs/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrf(),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            recipe_id: {{ recipe.id }},
+            date: dateVal,
+            meal_type: mealType,
+            servings: servingsVal,
+          }),
+        });
+
+        if (res.ok) {
+          if (logFeedback) {
+            logFeedback.style.color = '#FFFFFF';
+            logFeedback.textContent = '✓ Planted into your meal log!';
+            setTimeout(() => { logFeedback.textContent = ''; }, 4000);
+          }
+          if (typeof showToast === 'function') {
+            showToast('Planted into your meal log! 🌱', 'success');
+          }
+        } else {
+          if (logFeedback) {
+            logFeedback.style.color = '#FFFFFF';
+            logFeedback.textContent = 'Failed to log. Please try again.';
+          }
+        }
+      } catch (err) {
+        if (logFeedback) logFeedback.textContent = 'Network error.';
+      }
+    });
+  }
+
+  // ── Favorite Button AJAX ───────────────────────────────────
+  const favBtn = document.getElementById('favorite-btn');
+  if (favBtn) {
+    favBtn.addEventListener('click', async function () {
+      try {
+        const res = await fetch('/api/recipes/{{ recipe.id }}/favorite/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCsrf(),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
+        const data = await res.json();
+        if (data.is_favorited) {
+          favBtn.textContent = '♥ In favorites';
+        } else {
+          favBtn.textContent = '♡ Save to favorites';
+        }
+      } catch (err) {}
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Meal Tracker — Sproutly{% endblock %}
+
+{% block extra_head %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<div class="tracker-page container">
+
+  <!-- ═══════════════════════════════════════
+       PAGE HEADER (Date, Title, Nav Pills)
+  ════════════════════════════════════════ -->
+  <header class="tracker-header">
+    <p class="tracker-header__date">{{ current_date|date:"l, j F" }}</p>
+    <h1 class="tracker-header__title">Meal tracker</h1>
+
+    <div class="tracker-header__nav">
+      <a href="?date={{ prev_date }}" class="btn-tracker-date-pill" aria-label="Previous day">‹ yesterday</a>
+      <a href="?date={{ next_date }}" class="btn-tracker-date-pill" aria-label="Next day">tomorrow ›</a>
+      
+      <!-- Optional date picker hidden helper -->
+      <label class="btn-tracker-date-pill btn-tracker-date-pill--calendar" title="Choose specific date">
+        📅
+        <input
+          type="date"
+          id="date-picker"
+          class="visually-hidden"
+          value="{{ current_date|date:'Y-m-d' }}"
+          aria-label="Pick a date"
+        >
+      </label>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       TWO-COLUMN TRACKER GRID
+  ════════════════════════════════════════ -->
+  <div class="tracker-grid">
+
+    <!-- ── LEFT COLUMN: MEAL CARDS ────────── -->
+    <main class="tracker-meal-cards" id="tracker-meal-cards">
+      {% for meal in meal_sections %}
+        <section
+          class="tracker-meal-card {{ meal.color_class }}"
+          id="meal-section-{{ meal.type }}"
+          aria-labelledby="meal-{{ meal.type }}-heading"
+        >
+          <h2 class="tracker-meal-card__title" id="meal-{{ meal.type }}-heading">
+            {{ meal.title }}
+          </h2>
+
+          <div class="tracker-meal-card__items" id="meal-{{ meal.type }}-logs" role="list">
+            {% if meal.logs %}
+              {% for log in meal.logs %}
+                {% include "partials/_log_row.html" with log=log %}
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <button
+            type="button"
+            class="btn-add-food-dashed"
+            data-action="add-to-meal"
+            data-meal-type="{{ meal.type }}"
+            aria-label="Add food to {{ meal.title }}"
+          >
+            + add food
+          </button>
+        </section>
+      {% endfor %}
+    </main>
+
+    <!-- ── RIGHT COLUMN: SIDEBAR ──────────── -->
+    <aside class="tracker-sidebar" aria-label="Today summary and quick add">
+
+      <!-- 1. Today so far Card (Sage Green #A4C996) -->
+      <div class="tracker-card-today">
+        <h3 class="tracker-sidebar-card__title">Today so far</h3>
+
+        <div class="today-so-far__stat">
+          <span class="today-so-far__current" id="today-calories-current">
+            {{ daily_totals.calories|floatformat:0|default:"0" }}
+          </span>
+          <span class="today-so-far__target">
+            / {{ goals.calories.target|floatformat:0|default:"2000" }} kcal
+          </span>
+        </div>
+
+        <!-- Protein Progress Bar -->
+        <div class="tracker-progress-item">
+          <div class="tracker-progress-item__header">
+            <span class="tracker-progress-item__label">Protein</span>
+            <span class="tracker-progress-item__val" id="today-protein-val">
+              {{ daily_totals.protein|floatformat:0|default:"0" }} / {{ goals.protein.target|floatformat:0|default:"60" }} g
+            </span>
+          </div>
+          <div class="tracker-progress-bar-track">
+            <div
+              class="tracker-progress-bar-fill tracker-progress-bar-fill--yellow"
+              id="today-protein-bar"
+              style="width: {% if progress.protein.pct > 100 %}100{% else %}{{ progress.protein.pct|floatformat:1|default:'0' }}{% endif %}%;"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Iron Progress Bar -->
+        <div class="tracker-progress-item">
+          <div class="tracker-progress-item__header">
+            <span class="tracker-progress-item__label">Iron</span>
+            <span class="tracker-progress-item__val" id="today-iron-val">
+              {{ daily_totals.iron|floatformat:0|default:"0" }} / {{ goals.iron.target|floatformat:0|default:"18" }} mg
+            </span>
+          </div>
+          <div class="tracker-progress-bar-track">
+            <div
+              class="tracker-progress-bar-fill tracker-progress-bar-fill--coral"
+              id="today-iron-bar"
+              style="width: {% if progress.iron.pct > 100 %}100{% else %}{{ progress.iron.pct|floatformat:1|default:'0' }}{% endif %}%;"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Quick add Card (White #FFFFFF) -->
+      <div class="tracker-card-quick-add" id="quick-add-container">
+        <h3 class="tracker-sidebar-card__title">Quick add</h3>
+
+        <div class="quick-add__search-wrap">
+          <input
+            type="search"
+            id="food-search"
+            class="quick-add__input"
+            placeholder="Search recipes or ingredients"
+            autocomplete="off"
+            aria-label="Search recipes or ingredients"
+            aria-autocomplete="list"
+            aria-controls="food-search-results"
+          >
+          <ul class="quick-add__dropdown" id="food-search-results" role="listbox" hidden></ul>
+        </div>
+
+        <input type="hidden" id="selected-recipe-id" name="recipe_id">
+        <input type="hidden" id="selected-ingredient-id" name="ingredient_id">
+
+        <div class="quick-add__controls-row">
+          <select id="quick-meal-type" class="quick-add__meal-select" aria-label="Select meal">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="snack">Snacks</option>
+            <option value="dinner" selected>Dinner</option>
+          </select>
+
+          <div class="quick-add__servings-wrap">
+            <input
+              type="number"
+              id="quick-servings"
+              class="quick-add__servings-input"
+              value="1"
+              min="0.25"
+              step="0.25"
+              aria-label="Number of servings"
+            >
+            <span class="quick-add__servings-unit">srv</span>
+          </div>
+        </div>
+
+        <button type="button" id="quick-add-btn" class="btn-quick-add-plant">
+          Plant it
+        </button>
+
+        <div class="quick-add-feedback" id="quick-add-feedback" aria-live="polite"></div>
+      </div>
+
+      <!-- 3. Nudge / Tip Card (Warm Yellow #F7C548) -->
+      <div class="tracker-card-nudge">
+        <p class="tracker-card-nudge__text" id="tracker-nudge-text">{{ nudge_text }}</p>
+
+        <!-- Sprig Mascot SVG -->
+        <div class="tracker-card-nudge__mascot" aria-hidden="true">
+          <svg width="56" height="66" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig mascot">
+            <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#E88265" stroke="#2B2625" stroke-width="2"/>
+            <ellipse cx="30" cy="42" rx="16" ry="5" fill="#F49E86" stroke="#2B2625" stroke-width="2"/>
+            <line x1="30" y1="42" x2="30" y2="24" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M30 32 Q16 22 14 12 Q28 14 30 26" fill="#6AAF3D" stroke="#2B2625" stroke-width="2"/>
+            <path d="M30 28 Q44 18 46 8 Q32 12 30 22" fill="#4A7C2F" stroke="#2B2625" stroke-width="2"/>
+            <!-- Eyes -->
+            <circle cx="25" cy="52" r="2.5" fill="#2B2625"/>
+            <circle cx="35" cy="52" r="2.5" fill="#2B2625"/>
+            <!-- Smile -->
+            <path d="M26 56 Q30 60 34 56" stroke="#2B2625" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <!-- Cheeks -->
+            <circle cx="21" cy="55" r="2" fill="#FFAAA6"/>
+            <circle cx="39" cy="55" r="2" fill="#FFAAA6"/>
+            <!-- Cute little arms -->
+            <path d="M15 50 Q10 48 8 52" stroke="#2B2625" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <path d="M45 50 Q50 48 52 52" stroke="#2B2625" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const csrfToken   = document.querySelector('meta[name="csrf-token"]').content;
+  const currentDate = '{{ current_date|date:"Y-m-d" }}';
+
+  // ── Date picker redirect ──────────────────────────────────
+  const datePicker = document.getElementById('date-picker');
+  if (datePicker) {
+    datePicker.addEventListener('change', function () {
+      window.location.href = '?date=' + this.value;
+    });
+  }
+
+  // ── "+ add food" button: focuses quick-add with selected meal ───
+  document.addEventListener('click', function (e) {
+    const addBtn = e.target.closest('[data-action="add-to-meal"]');
+    if (!addBtn) return;
+    const mealType = addBtn.dataset.mealType;
+    const mealSelect = document.getElementById('quick-meal-type');
+    const foodSearch = document.getElementById('food-search');
+
+    if (mealSelect && mealType) {
+      mealSelect.value = mealType;
+    }
+    if (foodSearch) {
+      foodSearch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      foodSearch.focus();
+    }
+  });
+
+  // ── Food autocomplete ─────────────────────────────────────
+  const foodSearch    = document.getElementById('food-search');
+  const searchResults = document.getElementById('food-search-results');
+  let searchTimeout;
+
+  if (foodSearch && searchResults) {
+    foodSearch.addEventListener('input', function () {
+      clearTimeout(searchTimeout);
+      const q = this.value.trim();
+      if (q.length < 2) {
+        searchResults.hidden = true;
+        return;
+      }
+
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res  = await fetch('/api/search/?q=' + encodeURIComponent(q), {
+            headers: { 'X-CSRFToken': csrfToken }
+          });
+          const data = await res.json();
+          renderResults(data.results || []);
+        } catch (e) {
+          console.error('Search failed', e);
+        }
+      }, 250);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!foodSearch.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.hidden = true;
+      }
+    });
+  }
+
+  function renderResults(results) {
+    searchResults.innerHTML = '';
+    if (!results.length) {
+      const li = document.createElement('li');
+      li.className = 'quick-add__dropdown-item quick-add__dropdown-item--empty';
+      li.textContent = 'No matching food found';
+      searchResults.appendChild(li);
+      searchResults.hidden = false;
+      return;
+    }
+    results.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'quick-add__dropdown-item';
+      li.role = 'option';
+      li.textContent = item.name + (item.type === 'recipe' ? ' (recipe)' : '');
+      li.dataset.id   = item.id;
+      li.dataset.type = item.type;
+      li.addEventListener('click', function () {
+        foodSearch.value = item.name;
+        document.getElementById('selected-recipe-id').value     = item.type === 'recipe'     ? item.id : '';
+        document.getElementById('selected-ingredient-id').value = item.type === 'ingredient' ? item.id : '';
+        searchResults.hidden = true;
+      });
+      searchResults.appendChild(li);
+    });
+    searchResults.hidden = false;
+  }
+
+  // ── Quick add (Plant it) ──────────────────────────────────
+  const quickAddBtn      = document.getElementById('quick-add-btn');
+  const quickAddFeedback = document.getElementById('quick-add-feedback');
+
+  if (quickAddBtn) {
+    quickAddBtn.addEventListener('click', async function () {
+      const recipeId     = document.getElementById('selected-recipe-id').value;
+      const ingredientId = document.getElementById('selected-ingredient-id').value;
+      const servingsInput = document.getElementById('quick-servings');
+      const servings     = parseFloat(servingsInput ? servingsInput.value : '1') || 1;
+      const mealType     = document.getElementById('quick-meal-type').value;
+
+      if (!recipeId && !ingredientId) {
+        quickAddFeedback.textContent = 'Please choose a recipe or ingredient from search.';
+        quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
+        return;
+      }
+
+      const payload = {
+        date: currentDate,
+        meal_type: mealType,
+        servings: servings,
+      };
+      if (recipeId)     payload.recipe     = recipeId;
+      if (ingredientId) payload.ingredient = ingredientId;
+
+      try {
+        quickAddBtn.disabled = true;
+        quickAddBtn.textContent = 'Planting…';
+
+        const res  = await fetch('/api/logs/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken':  csrfToken,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          quickAddFeedback.textContent = 'Planted!';
+          quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--success';
+          setTimeout(() => window.location.reload(), 500);
+        } else {
+          const err = await res.json();
+          quickAddFeedback.textContent = err.detail || 'Could not plant meal.';
+          quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
+          quickAddBtn.disabled = false;
+          quickAddBtn.textContent = 'Plant it';
+        }
+      } catch (e) {
+        quickAddFeedback.textContent = 'Network error.';
+        quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
+        quickAddBtn.disabled = false;
+        quickAddBtn.textContent = 'Plant it';
+      }
+    });
+  }
+
+  // ── Stepper buttons (delegated increment/decrement) ───────
+  document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('[data-action="increment"],[data-action="decrement"]');
+    if (!btn) return;
+    const logId   = btn.dataset.logId;
+    const action  = btn.dataset.action;
+    const display = document.getElementById('servings-' + logId);
+    if (!display) return;
+
+    let servings = parseFloat(display.textContent) || 1;
+    if (action === 'increment') servings = +(servings + 0.25).toFixed(2);
+    if (action === 'decrement') servings = +(servings - 0.25).toFixed(2);
+    if (servings < 0.25) servings = 0.25;
+
+    try {
+      const res = await fetch('/api/logs/' + logId + '/', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+        body: JSON.stringify({ servings }),
+      });
+      if (res.ok) {
+        display.textContent = servings;
+        const row = btn.closest('.food-log-pill');
+        const unitSpan = row ? row.querySelector('.stepper-unit') : null;
+        if (unitSpan) {
+          unitSpan.textContent = servings === 1 ? 'serving' : 'servings';
+        }
+        // Smoothly reload in background or reload to update nutrient snapshot & sidebar bars
+        setTimeout(() => window.location.reload(), 400);
+      }
+    } catch (err) {
+      console.error('Stepper error', err);
+    }
+  });
+
+  // ── Delete buttons (delegated) ────────────────────────────
+  document.addEventListener('click', async function (e) {
+    const btn = e.target.closest('[data-action="delete"]');
+    if (!btn) return;
+    const logId = btn.dataset.logId;
+    if (!confirm('Remove this food from your log?')) return;
+
+    try {
+      const res = await fetch('/api/logs/' + logId + '/', {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': csrfToken },
+      });
+      if (res.ok || res.status === 204) {
+        const row = document.querySelector('[data-log-id="' + logId + '"]');
+        if (row) {
+          row.style.transition = 'all 0.25s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            row.remove();
+            window.location.reload();
+          }, 250);
+        }
+      }
+    } catch (err) {
+      console.error('Delete error', err);
+    }
+  });
+
+})();
+</script>
+{% endblock %}

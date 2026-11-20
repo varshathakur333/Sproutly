@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}The Recipe Drawer — Sproutly{% endblock %}
+
+{% block extra_head %}
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="initial-params" content="{{ request.GET.urlencode }}">
+{% endblock %}
+
+{% block content %}
+<div class="recipe-drawer-page container">
+
+  <!-- ══════════════════════════════════
+       PAGE HEADER (Heading + Sprig + Create Recipe CTA)
+  ═══════════════════════════════════════ -->
+  <header class="recipe-drawer-header">
+    <div class="recipe-drawer-header__left">
+      <h1 class="recipe-drawer-title">The recipe drawer</h1>
+    </div>
+
+    <div class="recipe-drawer-header__right">
+      <!-- Let users make their own recipes -->
+      <a href="{% url 'recipe_create' %}" class="btn btn-green btn--pill recipe-create-btn" title="Create your own plant-powered recipe">
+        + Plant a recipe
+      </a>
+
+      <!-- Sprig Mascot with Speech Bubble -->
+      <div class="sprig-speech-wrap">
+        <div class="sprig-speech-bubble">
+          try the dal, it is full of iron!
+        </div>
+        <div class="sprig-speech-mascot">
+          <svg width="46" height="54" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig mascot">
+            <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#E88265" stroke="#2B2625" stroke-width="2"/>
+            <ellipse cx="30" cy="42" rx="16" ry="5" fill="#F49E86" stroke="#2B2625" stroke-width="2"/>
+            <line x1="30" y1="42" x2="30" y2="24" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M30 32 Q16 22 14 12 Q28 14 30 26" fill="#6AAF3D" stroke="#2B2625" stroke-width="2"/>
+            <path d="M30 28 Q44 18 46 8 Q32 12 30 22" fill="#4A7C2F" stroke="#2B2625" stroke-width="2"/>
+            <circle cx="26" cy="52" r="2" fill="#2B2625"/>
+            <circle cx="34" cy="52" r="2" fill="#2B2625"/>
+            <path d="M26 56 Q30 60 34 56" stroke="#2B2625" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="22" cy="54" r="2.5" fill="#FA8072" opacity="0.8"/>
+            <circle cx="38" cy="54" r="2.5" fill="#FA8072" opacity="0.8"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════
+       SEARCH BAR, SEARCH BUTTON & CIRCULAR FILTER BUTTON
+  ═══════════════════════════════════════ -->
+  <div class="recipe-search-bar-wrap">
+    <form method="get" action="{% url 'recipe_list' %}" class="recipe-search-form" id="search-bar-form">
+      {% if request.GET.tab %}<input type="hidden" name="tab" value="{{ request.GET.tab }}">{% endif %}
+      {% if request.GET.preset %}<input type="hidden" name="preset" value="{{ request.GET.preset }}">{% endif %}
+      {% if request.GET.diet_type %}<input type="hidden" name="diet_type" value="{{ request.GET.diet_type }}">{% endif %}
+      {% if request.GET.meal_type %}<input type="hidden" name="meal_type" value="{{ request.GET.meal_type }}">{% endif %}
+      {% if request.GET.max_prep_time %}<input type="hidden" name="max_prep_time" value="{{ request.GET.max_prep_time }}">{% endif %}
+      {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+
+      <div class="recipe-search-input-wrap">
+        <input
+          type="search"
+          id="search-q"
+          name="q"
+          class="recipe-search-input"
+          placeholder="Search recipes or ingredients"
+          value="{{ request.GET.q|default:'' }}"
+          autocomplete="off"
+        >
+      </div>
+
+      <!-- Green Pill Search Button (matches image) -->
+      <button type="submit" class="btn-recipe-search" aria-label="Search">
+        Search
+      </button>
+
+      <!-- Circular Yellow Filter Button with Slider Icon & Count Badge (matches image) -->
+      <button
+        type="button"
+        class="recipe-filter-circle-btn"
+        id="openSidebar"
+        aria-label="Open filter drawer"
+        title="Open filters"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="7" x2="20" y2="7"></line>
+          <circle cx="16" cy="7" r="2.5" fill="#F7C548" stroke="#2B2625" stroke-width="2.5"></circle>
+          <line x1="4" y1="17" x2="20" y2="17"></line>
+          <circle cx="8" cy="17" r="2.5" fill="#F7C548" stroke="#2B2625" stroke-width="2.5"></circle>
+        </svg>
+
+        {% if active_filters_count > 0 %}
+          <span class="filter-count-badge" id="filter-count-badge" aria-label="{{ active_filters_count }} filters applied">{{ active_filters_count }}</span>
+        {% endif %}
+      </button>
+    </form>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PRESET CHIPS ROW (High protein, Iron rich, etc.)
+  ═══════════════════════════════════════ -->
+  <div class="recipe-preset-chips-row">
+    <a href="?preset=high_protein{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+       class="preset-chip-pill {% if request.GET.preset == 'high_protein' %}preset-chip-pill--active{% endif %}">
+      High protein
+    </a>
+    <a href="?preset=iron_rich{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+       class="preset-chip-pill {% if request.GET.preset == 'iron_rich' %}preset-chip-pill--active{% endif %}">
+      Iron rich
+    </a>
+    <a href="?preset=low_calorie{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+       class="preset-chip-pill {% if request.GET.preset == 'low_calorie' %}preset-chip-pill--active{% endif %}">
+      Low calorie
+    </a>
+    <a href="?preset=high_fiber{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+       class="preset-chip-pill {% if request.GET.preset == 'high_fiber' %}preset-chip-pill--active{% endif %}">
+      High fiber
+    </a>
+    <a href="?preset=vegan{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+       class="preset-chip-pill {% if request.GET.preset == 'vegan' or request.GET.diet_type == 'vegan' %}preset-chip-pill--active{% endif %}">
+      Vegan
+    </a>
+    <a href="?preset=under_20{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+       class="preset-chip-pill {% if request.GET.preset == 'under_20' or request.GET.max_prep_time == '20' %}preset-chip-pill--active{% endif %}">
+      Under 20 min
+    </a>
+
+    {% if user.is_authenticated %}
+      <a href="?tab=mine{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+         class="preset-chip-pill {% if request.GET.tab == 'mine' %}preset-chip-pill--active{% endif %}"
+         title="Recipes you created">
+        🌱 My Recipes
+      </a>
+      <a href="?tab=favorites{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+         class="preset-chip-pill {% if request.GET.tab == 'favorites' %}preset-chip-pill--active{% endif %}"
+         title="Recipes you favorited">
+        ♥ Favorites
+      </a>
+    {% endif %}
+
+    {% if active_filters_count > 0 %}
+      <a href="{% url 'recipe_list' %}" class="preset-chip-pill preset-chip-pill--clear" title="Reset all filters">
+        ✕ Clear ({{ active_filters_count }})
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- ══════════════════════════════════
+       4-COLUMN NEO RECIPE CARDS GRID
+  ═══════════════════════════════════════ -->
+  <div class="recipe-grid-4col" id="recipe-grid">
+    {% for recipe in recipes %}
+      {% include "partials/_recipe_card.html" with recipe=recipe %}
+    {% empty %}
+      <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 48px; background: #FFFFFF; border: var(--border-thick); border-radius: var(--radius-card); box-shadow: 4px 4px 0 #2B2625;">
+        <div style="font-size: 3rem; margin-bottom: 12px;">🌱</div>
+        <h3 style="font-family: var(--font-display); font-weight: 900; font-size: 1.5rem; margin-bottom: 8px;">No recipes match your filters</h3>
+        <p style="color: var(--clr-text-muted); font-weight: 600; margin-bottom: 20px;">Try clearing filters or plant your own recipe!</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <a href="{% url 'recipe_list' %}" class="btn btn-outline btn--pill">Reset filters</a>
+          <a href="{% url 'recipe_create' %}" class="btn btn-green btn--pill">+ Plant a recipe</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <nav class="pagination" aria-label="Recipe pages" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 40px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}" class="btn btn-outline btn--pill">← Prev</a>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="btn btn-green btn--pill">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="?page={{ num }}&{{ request.GET.urlencode }}" class="btn btn-outline btn--pill" style="background: #FFFFFF;">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}" class="btn btn-outline btn--pill">Next →</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+
+</div>
+
+<!-- ══════════════════════════════════
+     FILTERS SLIDE-OUT DRAWER (matches image)
+═══════════════════════════════════════ -->
+<aside class="filter-sidebar" id="filter-sidebar" aria-label="Recipe filters">
+  <form id="filter-form" method="get" action="{% url 'recipe_list' %}">
+    {% if request.GET.tab %}<input type="hidden" name="tab" value="{{ request.GET.tab }}">{% endif %}
+    <input type="hidden" name="preset" id="drawer-preset" value="{{ request.GET.preset|default:'' }}">
+    <input type="hidden" name="diet_type" id="drawer-diet-type" value="{{ request.GET.diet_type|default:'' }}">
+    <input type="hidden" name="meal_type" id="drawer-meal-type" value="{{ request.GET.meal_type|default:'' }}">
+
+    <!-- Header: Sprig mascot + Filters title + Circular Close Button -->
+    <div class="filter-drawer__header">
+      <div class="filter-drawer__header-brand">
+        <svg width="26" height="32" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig mascot">
+          <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#E88265" stroke="#2B2625" stroke-width="2.5"/>
+          <ellipse cx="30" cy="42" rx="16" ry="5" fill="#F49E86" stroke="#2B2625" stroke-width="2.5"/>
+          <line x1="30" y1="42" x2="30" y2="24" stroke="#2B2625" stroke-width="3" stroke-linecap="round"/>
+          <path d="M30 32 Q16 22 14 12 Q28 14 30 26" fill="#6AAF3D" stroke="#2B2625" stroke-width="2.5"/>
+          <path d="M30 28 Q44 18 46 8 Q32 12 30 22" fill="#4A7C2F" stroke="#2B2625" stroke-width="2.5"/>
+          <circle cx="25" cy="52" r="2.5" fill="#2B2625"/>
+          <circle cx="35" cy="52" r="2.5" fill="#2B2625"/>
+          <path d="M26 56 Q30 60 34 56" stroke="#2B2625" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </svg>
+        <h2 class="filter-drawer__heading">Filters</h2>
+      </div>
+
+      <button type="button" class="filter-drawer__close" id="closeSidebar" aria-label="Close filters">
+        ✕
+      </button>
+    </div>
+
+    <!-- Scrollable Body -->
+    <div class="filter-drawer__body">
+
+      <!-- Keyword -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label" for="drawer-search">Keyword</label>
+        <input
+          type="search"
+          id="drawer-search"
+          name="q"
+          class="filter-drawer__input"
+          placeholder="Ingredient or dish name..."
+          value="{{ request.GET.q|default:'' }}"
+          autocomplete="off"
+        >
+      </div>
+
+      <!-- Quick picks -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label">Quick picks</label>
+        <div class="filter-drawer__pills-wrap" id="pills-preset">
+          <button type="button" class="filter-drawer-pill {% if request.GET.preset == 'high_protein' %}filter-drawer-pill--active{% endif %}" data-name="preset" data-val="high_protein">High protein</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.preset == 'iron_rich' %}filter-drawer-pill--active{% endif %}" data-name="preset" data-val="iron_rich">Iron rich</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.preset == 'low_calorie' %}filter-drawer-pill--active{% endif %}" data-name="preset" data-val="low_calorie">Low calorie</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.preset == 'high_fiber' %}filter-drawer-pill--active{% endif %}" data-name="preset" data-val="high_fiber">High fiber</button>
+        </div>
+      </div>
+
+      <!-- Diet -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label">Diet</label>
+        <div class="filter-drawer__pills-wrap" id="pills-diet">
+          <button type="button" class="filter-drawer-pill {% if not request.GET.diet_type %}filter-drawer-pill--active{% endif %}" data-name="diet_type" data-val="">All</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.diet_type == 'vegan' %}filter-drawer-pill--active{% endif %}" data-name="diet_type" data-val="vegan">Vegan</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.diet_type == 'vegetarian' %}filter-drawer-pill--active{% endif %}" data-name="diet_type" data-val="vegetarian">Vegetarian</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.diet_type == 'eggetarian' %}filter-drawer-pill--active{% endif %}" data-name="diet_type" data-val="eggetarian">Eggetarian</button>
+        </div>
+      </div>
+
+      <!-- Meal -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label">Meal</label>
+        <div class="filter-drawer__pills-wrap" id="pills-meal">
+          <button type="button" class="filter-drawer-pill {% if not request.GET.meal_type %}filter-drawer-pill--active{% endif %}" data-name="meal_type" data-val="">All</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.meal_type == 'breakfast' %}filter-drawer-pill--active{% endif %}" data-name="meal_type" data-val="breakfast">Breakfast</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.meal_type == 'lunch' %}filter-drawer-pill--active{% endif %}" data-name="meal_type" data-val="lunch">Lunch</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.meal_type == 'dinner' %}filter-drawer-pill--active{% endif %}" data-name="meal_type" data-val="dinner">Dinner</button>
+          <button type="button" class="filter-drawer-pill {% if request.GET.meal_type == 'snack' %}filter-drawer-pill--active{% endif %}" data-name="meal_type" data-val="snack">Snack</button>
+        </div>
+      </div>
+
+      <!-- Max prep time -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label" for="drawer-prep-slider">Max prep time</label>
+        <div class="filter-drawer__slider-row">
+          <input
+            type="range"
+            id="drawer-prep-slider"
+            name="max_prep_time"
+            min="5"
+            max="60"
+            step="5"
+            value="{{ request.GET.max_prep_time|default:'25' }}"
+            class="filter-drawer__range"
+          >
+          <span class="filter-drawer__slider-bubble" id="prep-time-bubble">{{ request.GET.max_prep_time|default:'25' }} min</span>
+        </div>
+      </div>
+
+      <!-- Nutrients per serving (2x2 Colored Cards Grid) -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label">Nutrients per serving</label>
+        <div class="filter-drawer__nutrients-grid">
+
+          <!-- Calories (Yellow #F7C548) -->
+          <div class="nutrient-card nutrient-card--yellow">
+            <span class="nutrient-card__title">Calories <small>kcal</small></span>
+            <div class="nutrient-card__inputs">
+              <input type="number" name="cal_min" placeholder="Min" min="0" value="{{ request.GET.cal_min|default:'' }}">
+              <input type="number" name="cal_max" placeholder="Max" min="0" value="{{ request.GET.cal_max|default:'' }}">
+            </div>
+          </div>
+
+          <!-- Protein (Coral #E55B3C) -->
+          <div class="nutrient-card nutrient-card--coral">
+            <span class="nutrient-card__title">Protein <small>g</small></span>
+            <div class="nutrient-card__inputs">
+              <input type="number" name="protein_min" placeholder="Min" min="0" value="{{ request.GET.protein_min|default:'' }}">
+              <input type="number" name="protein_max" placeholder="Max" min="0" value="{{ request.GET.protein_max|default:'' }}">
+            </div>
+          </div>
+
+          <!-- Iron (Teal #3697A5) -->
+          <div class="nutrient-card nutrient-card--teal">
+            <span class="nutrient-card__title">Iron <small>mg</small></span>
+            <div class="nutrient-card__inputs">
+              <input type="number" name="iron_min" placeholder="Min" min="0" step="0.5" value="{{ request.GET.iron_min|default:'' }}">
+              <input type="number" name="iron_max" placeholder="Max" min="0" step="0.5" value="{{ request.GET.iron_max|default:'' }}">
+            </div>
+          </div>
+
+          <!-- Fiber (Sage Green #A4C996) -->
+          <div class="nutrient-card nutrient-card--green">
+            <span class="nutrient-card__title">Fiber <small>g</small></span>
+            <div class="nutrient-card__inputs">
+              <input type="number" name="fiber_min" placeholder="Min" min="0" step="0.5" value="{{ request.GET.fiber_min|default:'' }}">
+              <input type="number" name="fiber_max" placeholder="Max" min="0" step="0.5" value="{{ request.GET.fiber_max|default:'' }}">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Sort by -->
+      <div class="filter-drawer__group">
+        <label class="filter-drawer__label" for="drawer-sort-by">Sort by</label>
+        <div class="filter-drawer__select-wrap">
+          <select id="drawer-sort-by" name="sort" class="filter-drawer__select">
+            <option value="newest" {% if request.GET.sort == 'newest' or not request.GET.sort %}selected{% endif %}>Newest</option>
+            <option value="protein_desc" {% if request.GET.sort == 'protein_desc' %}selected{% endif %}>Protein ↓</option>
+            <option value="cal_asc" {% if request.GET.sort == 'cal_asc' %}selected{% endif %}>Calories ↑</option>
+            <option value="iron_desc" {% if request.GET.sort == 'iron_desc' %}selected{% endif %}>Iron ↓</option>
+            <option value="fiber_desc" {% if request.GET.sort == 'fiber_desc' %}selected{% endif %}>Fiber ↓</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Divider & Footer -->
+    <div class="filter-drawer__footer">
+      <hr class="drawer-divider-dashed">
+      <div class="filter-drawer__match-count">{{ page_obj.paginator.count|default:recipes|length }} recipes match</div>
+      <div class="filter-drawer__footer-btns">
+        <button type="submit" class="btn btn-green btn--pill filter-drawer__apply-btn">Apply filters</button>
+        <a href="{% url 'recipe_list' %}" class="btn btn-outline btn--pill filter-drawer__clear-btn">Clear all</a>
+      </div>
+    </div>
+
+  </form>
+</aside>
+
+<!-- Sidebar overlay for drawer -->
+<div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // Filter sidebar drawer toggle
+  const openBtn  = document.getElementById('openSidebar');
+  const closeBtn = document.getElementById('closeSidebar');
+  const sidebar  = document.getElementById('filter-sidebar');
+  const overlay  = document.getElementById('sidebar-overlay');
+
+  function openSidebar() {
+    sidebar.classList.add('filter-sidebar--open');
+    overlay.classList.add('sidebar-overlay--visible');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('filter-sidebar--open');
+    overlay.classList.remove('sidebar-overlay--visible');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  if (openBtn)  openBtn.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+
+  // Esc key closes drawer
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && sidebar.classList.contains('filter-sidebar--open')) {
+      closeSidebar();
+    }
+  });
+
+  // Pill selectors for Quick picks, Diet, Meal
+  document.querySelectorAll('.filter-drawer-pill').forEach(pill => {
+    pill.addEventListener('click', function () {
+      const fieldName = this.dataset.name;
+      const val = this.dataset.val;
+      const hiddenInput = document.getElementById('drawer-' + (fieldName === 'preset' ? 'preset' : (fieldName === 'diet_type' ? 'diet-type' : 'meal-type')));
+
+      // In the same group, update active state
+      const parent = this.closest('.filter-drawer__pills-wrap');
+      parent.querySelectorAll('.filter-drawer-pill').forEach(p => p.classList.remove('filter-drawer-pill--active'));
+      this.classList.add('filter-drawer-pill--active');
+
+      if (hiddenInput) {
+        hiddenInput.value = val;
+      }
+    });
+  });
+
+  // Range slider for max prep time
+  const slider = document.getElementById('drawer-prep-slider');
+  const bubble = document.getElementById('prep-time-bubble');
+
+  function updateSliderFill() {
+    if (!slider || !bubble) return;
+    const min = parseFloat(slider.min) || 5;
+    const max = parseFloat(slider.max) || 60;
+    const val = parseFloat(slider.value) || 25;
+    const pct = ((val - min) / (max - min)) * 100;
+    slider.style.setProperty('--slider-fill-pct', pct + '%');
+    bubble.textContent = val + ' min';
+  }
+
+  if (slider) {
+    slider.addEventListener('input', updateSliderFill);
+    updateSliderFill();
+  }
+})();
+</script>
+{% endblock %}

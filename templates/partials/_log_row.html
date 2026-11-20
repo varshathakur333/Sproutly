@@ -1,0 +1,61 @@
+{% comment %}
+  Context variable: log — MealLog instance
+{% endcomment %}
+{% load static %}
+<div class="food-log-pill log-row"
+     data-log-id="{{ log.id }}"
+     data-servings="{{ log.servings }}"
+     role="listitem">
+
+  <!-- Food Name -->
+  <div class="food-log-pill__name" title="{% if log.recipe %}{{ log.recipe.title }}{% elif log.ingredient %}{{ log.ingredient.name }}{% endif %}">
+    {% if log.recipe %}
+      {{ log.recipe.title }}
+    {% elif log.ingredient %}
+      {{ log.ingredient.name }}
+    {% else %}
+      Unknown food
+    {% endif %}
+  </div>
+
+  <!-- Servings Stepper Pill (Yellow pill with - and +) -->
+  <div class="food-log-pill__stepper" role="group" aria-label="Adjust servings">
+    <button
+      type="button"
+      class="stepper-btn stepper-btn--dec"
+      data-action="decrement"
+      data-log-id="{{ log.id }}"
+      aria-label="Decrease servings"
+    >−</button>
+
+    <span class="stepper-count-wrap">
+      <span class="stepper-value" id="servings-{{ log.id }}">{{ log.servings|floatformat:"-2" }}</span>
+      <span class="stepper-unit">serving{% if log.servings != 1 %}s{% endif %}</span>
+    </span>
+
+    <button
+      type="button"
+      class="stepper-btn stepper-btn--inc"
+      data-action="increment"
+      data-log-id="{{ log.id }}"
+      aria-label="Increase servings"
+    >+</button>
+  </div>
+
+  <!-- Calories & Delete -->
+  <div class="food-log-pill__meta">
+    <span class="food-log-pill__calories" id="cals-{{ log.id }}">
+      {{ log.snap_calories|floatformat:0 }} kcal
+    </span>
+
+    <button
+      type="button"
+      class="food-log-pill__delete"
+      data-action="delete"
+      data-log-id="{{ log.id }}"
+      title="Remove"
+      aria-label="Delete meal log"
+    >✕</button>
+  </div>
+
+</div>

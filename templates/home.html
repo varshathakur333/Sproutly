@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sproutly — Eat plants. Hit your numbers.{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════
+     HERO SECTION (Image 1)
+════════════════════════════════════════════ -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-grid">
+
+      <!-- LEFT: Hero Copy -->
+      <div class="hero-left">
+        <span class="hero-tag">Eat plants. Hit your numbers.</span>
+
+        <h1 class="hero-title">
+          Plant good food.<br>
+          <span class="hero-title--green">Watch yourself grow.</span>
+        </h1>
+
+        <p class="hero-desc">
+          Find veggie recipes by the nutrients you need, log meals in a tap,
+          and let Sprig cheer you on.
+        </p>
+
+        <div class="hero-actions">
+          {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="btn btn-primary btn--lg">Start planting</a>
+          {% else %}
+            <a href="{% url 'register' %}" class="btn btn-primary btn--lg">Start planting</a>
+          {% endif %}
+          <a href="{% url 'recipe_list' %}" class="btn btn-outline btn--lg">Browse recipes</a>
+        </div>
+      </div>
+
+      <!-- RIGHT: Arched Yellow Card with Sprig & Buddies -->
+      <div class="hero-right">
+        <div class="hero-arch">
+
+          <!-- Speech bubble -->
+          <div class="hero-speech-bubble">hi, i am Sprig!</div>
+
+          <!-- Little Tomato Buddy -->
+          <div class="hero-buddy hero-buddy--tomato">
+            <svg width="48" height="48" viewBox="0 0 50 50" fill="none">
+              <circle cx="25" cy="28" r="18" fill="#E55B3C" stroke="#2B2625" stroke-width="2.5"/>
+              <path d="M25 8 L25 14" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round"/>
+              <path d="M18 13 Q25 17 32 13" stroke="#2B2625" stroke-width="2" fill="#3E6B27"/>
+              <circle cx="20" cy="27" r="2" fill="#2B2625"/>
+              <circle cx="30" cy="27" r="2" fill="#2B2625"/>
+              <path d="M22 31 Q25 34 28 31" stroke="#2B2625" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="17" cy="29" r="2" fill="#FFA590"/>
+              <circle cx="33" cy="29" r="2" fill="#FFA590"/>
+            </svg>
+          </div>
+
+          <!-- Sprig mascot with arms -->
+          <div class="hero-mascot-wrap">
+            <svg width="200" height="230" viewBox="0 0 70 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig the plant mascot">
+              <!-- Arms -->
+              <path d="M18 48 Q8 44 8 48" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <path d="M52 48 Q62 44 62 48" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              <!-- Pot -->
+              <path d="M20 40 L24 64 Q35 67 46 64 L50 40 Z" fill="#E0835D" stroke="#2B2625" stroke-width="2.5"/>
+              <ellipse cx="35" cy="40" rx="16" ry="5" fill="#EFA27E" stroke="#2B2625" stroke-width="2.5"/>
+              <!-- Stem -->
+              <line x1="35" y1="40" x2="35" y2="18" stroke="#2B2625" stroke-width="3" stroke-linecap="round"/>
+              <!-- Leaves -->
+              <path d="M35 28 Q20 16 18 5 Q32 10 35 22" fill="#6AAF3D" stroke="#2B2625" stroke-width="2.5"/>
+              <path d="M35 24 Q50 12 52 2 Q38 6 35 18" fill="#4A7C2F" stroke="#2B2625" stroke-width="2.5"/>
+              <!-- Eyes -->
+              <circle cx="30" cy="51" r="2" fill="#2B2625"/>
+              <circle cx="40" cy="51" r="2" fill="#2B2625"/>
+              <!-- Smile -->
+              <path d="M31 56 Q35 60 39 56" stroke="#2B2625" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <!-- Cheeks -->
+              <circle cx="26" cy="53" r="2.5" fill="#F4A59D"/>
+              <circle cx="44" cy="53" r="2.5" fill="#F4A59D"/>
+            </svg>
+          </div>
+
+          <!-- Little Watering Bowl Buddy -->
+          <div class="hero-buddy hero-buddy--pot">
+            <svg width="44" height="44" viewBox="0 0 50 50" fill="none">
+              <path d="M12 24 Q12 40 25 40 Q38 40 38 24 Z" fill="#58B2C9" stroke="#2B2625" stroke-width="2.5"/>
+              <path d="M12 24 Q25 8 38 24" stroke="#2B2625" stroke-width="2.5" fill="none"/>
+              <circle cx="21" cy="28" r="1.5" fill="#2B2625"/>
+              <circle cx="29" cy="28" r="1.5" fill="#2B2625"/>
+              <path d="M22 32 Q25 35 28 32" stroke="#2B2625" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     3 FEATURE CARDS (Image 1)
+════════════════════════════════════════════ -->
+<section class="features">
+  <div class="container">
+    <div class="features__grid">
+
+      <!-- Red Card: Goal-led recipes -->
+      <div class="feature-card feature-card--red">
+        <div class="feature-card__icon">🍅</div>
+        <div>
+          <h3 class="feature-card__title">Goal-led recipes</h3>
+          <p class="feature-card__desc">Filter by protein, iron, calcium and B12.</p>
+        </div>
+      </div>
+
+      <!-- Yellow Card: Portions that flex -->
+      <div class="feature-card feature-card--yellow">
+        <div class="feature-card__icon">😊</div>
+        <div>
+          <h3 class="feature-card__title">Portions that flex</h3>
+          <p class="feature-card__desc">Nudge servings and see every number update.</p>
+        </div>
+      </div>
+
+      <!-- Green Card: A garden of progress -->
+      <div class="feature-card feature-card--green">
+        <div class="feature-card__icon">🥣</div>
+        <div>
+          <h3 class="feature-card__title">A garden of progress</h3>
+          <p class="feature-card__desc">Daily bars show what is blooming and what is thirsty.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FEATURED RECIPES
+════════════════════════════════════════════ -->
+<section class="featured-recipes">
+  <div class="container">
+    <div class="featured-recipes__header">
+      <h2 class="featured-recipes__title">Featured Recipes</h2>
+      <a href="{% url 'recipe_list' %}" class="featured-recipes__more">Browse all recipes →</a>
+    </div>
+
+    {% if featured_recipes %}
+      <div class="recipe-grid">
+        {% for recipe in featured_recipes %}
+          {% include "partials/_recipe_card.html" with recipe=recipe %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>No featured recipes yet. <a href="{% url 'recipe_list' %}">Browse all recipes</a>.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock content %}

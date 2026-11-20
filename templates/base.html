@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sproutly — Eat plants. Hit your numbers.{% endblock %}</title>
+
+  <!-- Google Fonts: Nunito & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Sproutly CSS -->
+  <link rel="stylesheet" href="{% static 'css/sproutly.css' %}">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="sproutly-body">
+
+  <!-- ═══════════════════════════════════════
+       TOP NAVBAR (hidden on login/register via block)
+  ════════════════════════════════════════════ -->
+  {% block navbar %}
+  <header class="navbar-wrapper">
+    <nav class="navbar-pill" role="navigation" aria-label="Main navigation">
+
+      <!-- Brand Logo + Name -->
+      <a class="navbar-brand" href="{% url 'home' %}">
+        <svg width="28" height="32" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#C47F4A"/>
+          <ellipse cx="30" cy="42" rx="16" ry="5" fill="#D4956A"/>
+          <line x1="30" y1="42" x2="30" y2="22" stroke="#4A7C2F" stroke-width="3" stroke-linecap="round"/>
+          <path d="M30 30 Q18 20 16 10 Q28 14 30 24" fill="#6AAF3D"/>
+          <path d="M30 26 Q42 16 44 6 Q32 10 30 20" fill="#4A7C2F"/>
+          <circle cx="26" cy="52" r="1.5" fill="#8B5E2A"/>
+          <circle cx="34" cy="52" r="1.5" fill="#8B5E2A"/>
+          <path d="M26 56 Q30 59 34 56" stroke="#8B5E2A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span class="navbar-brand__text">Sproutly</span>
+      </a>
+
+      <!-- Primary Nav Links -->
+      <ul class="navbar-nav" role="list">
+        <li>
+          <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}"
+             class="nav-link {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'dashboard' %}nav-link--active{% endif %}">
+            Today
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'tracker' %}"
+             class="nav-link {% if request.resolver_match.url_name == 'tracker' %}nav-link--active{% endif %}">
+            Track
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'recipe_list' %}"
+             class="nav-link {% if request.resolver_match.url_name in 'recipe_list,recipe_detail,recipe_create,recipe_edit' %}nav-link--active{% endif %}">
+            Recipes
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'goals' %}"
+             class="nav-link {% if request.resolver_match.url_name == 'goals' %}nav-link--active{% endif %}">
+            Goals
+          </a>
+        </li>
+      </ul>
+
+      <!-- Right Side Actions -->
+      <div class="navbar-actions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'tracker' %}" class="navbar-log-btn">+ Log a meal</a>
+          <form method="post" action="{% url 'logout' %}" style="display:inline; margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="nav-logout-btn" title="Sign out">Logout</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="nav-link">Login</a>
+          <a href="{% url 'register' %}" class="navbar-log-btn">+ Log a meal</a>
+        {% endif %}
+      </div>
+
+    </nav>
+  </header>
+  {% endblock navbar %}
+
+  <!-- ═══════════════════════════════════════
+       DJANGO MESSAGES → TOASTS
+  ════════════════════════════════════════════ -->
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="toast {% if message.tags %}toast--{{ message.tags }}{% endif %}">
+          <span>{% if 'error' in message.tags %}❌{% elif 'success' in message.tags %}🌱{% else %}ℹ️{% endif %}</span>
+          <span>{{ message }}</span>
+          <button type="button" onclick="this.parentElement.remove()" style="margin-left:auto; background:none; border:none; color:inherit; cursor:pointer; font-size:1.1rem; line-height:1;">×</button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════════ -->
+  <main class="main-content" id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ═══════════════════════════════════════
+       MOBILE BOTTOM TAB BAR
+  ════════════════════════════════════════════ -->
+  <nav class="bottom-tab-bar" aria-label="Mobile navigation">
+    <a href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'home' %}{% endif %}" class="bottom-tab {% if request.resolver_match.url_name in 'home,dashboard' %}bottom-tab--active{% endif %}">
+      <span class="bottom-tab__icon">☀️</span>
+      <span class="bottom-tab__label">Today</span>
+    </a>
+    <a href="{% url 'tracker' %}" class="bottom-tab {% if request.resolver_match.url_name == 'tracker' %}bottom-tab--active{% endif %}">
+      <span class="bottom-tab__icon">📋</span>
+      <span class="bottom-tab__label">Track</span>
+    </a>
+    <a href="{% url 'recipe_list' %}" class="bottom-tab {% if request.resolver_match.url_name in 'recipe_list,recipe_detail,recipe_create,recipe_edit' %}bottom-tab--active{% endif %}">
+      <span class="bottom-tab__icon">🌱</span>
+      <span class="bottom-tab__label">Recipes</span>
+    </a>
+    <a href="{% url 'goals' %}" class="bottom-tab {% if request.resolver_match.url_name == 'goals' %}bottom-tab--active{% endif %}">
+      <span class="bottom-tab__icon">🎯</span>
+      <span class="bottom-tab__label">Goals</span>
+    </a>
+  </nav>
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <p>© 2025 Sproutly — Eat plants. Hit your numbers.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{% static 'js/sproutly.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

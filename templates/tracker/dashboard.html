@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Today — Sproutly{% endblock %}
+
+{% block extra_head %}
+  <script src="{% static 'js/chart.umd.min.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="today-page container">
+
+  <!-- ══════════════════════════════════
+       HEADER (Tuesday, 3 November / Hello, sprout!)
+  ═══════════════════════════════════════ -->
+  <header class="today-header">
+    <div class="today-header__left">
+      <p class="today-header__date">
+        {{ today|date:"l, j F" }}
+        {% if not is_actual_today %}
+          <span class="today-history-tag">Viewing history</span>
+        {% endif %}
+      </p>
+      <h1 class="today-header__title">Hello, {{ user_greeting }}!</h1>
+    </div>
+    {% if not is_actual_today %}
+      <div class="today-header__right">
+        <a href="{% url 'dashboard' %}" class="btn-today-return" title="Return to current date">
+          ‹ Back to Today
+        </a>
+      </div>
+    {% endif %}
+  </header>
+
+  <!-- ══════════════════════════════════
+       TODAY DASHBOARD TWO-COLUMN GRID
+  ═══════════════════════════════════════ -->
+  <div class="today-grid">
+
+    <!-- ── LEFT COLUMN ────────────────── -->
+    <div class="today-left-col">
+
+      <!-- 1. Your week card -->
+      <div class="your-week-card">
+        <div class="your-week__header">
+          <h2 class="your-week__title">Your week</h2>
+          {% if not is_actual_today %}
+            <a href="{% url 'dashboard' %}" class="btn-your-week-today" title="Jump to current date">
+              Today ➔
+            </a>
+          {% endif %}
+        </div>
+        <div class="your-week__days">
+          {% for day in week_days %}
+            <a href="?date={{ day.date_str }}" class="your-week__col" title="{{ day.date_str }}">
+              <span class="your-week__name">{{ day.name }}</span>
+              <span class="your-week__circle your-week__circle--{{ day.status }}">{{ day.day_num }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Target Calories Pill Bar -->
+      <div class="calories-pill-bar">
+        <div class="calories-pill-bar__fill" style="width: {{ calories_pct }}%;"></div>
+        <span class="calories-pill-bar__text">Target · {{ calories_consumed|floatformat:0 }} of {{ calories_target|floatformat:0 }} kcal</span>
+      </div>
+
+      <!-- 3. Meals today teal card -->
+      <div class="meals-today-card">
+        <h2 class="meals-today__title">Meals today</h2>
+        <div class="meals-today__list">
+          {% for meal in meals_today %}
+            <div class="meals-today__row">
+              <span class="meals-today__label">{{ meal.label }}</span>
+              {% if meal.has_food %}
+                <a href="{% url 'tracker' %}?date={{ today|date:'Y-m-d' }}&meal_type={{ meal.key }}" class="meals-today__pill" title="View in tracker">
+                  <span class="meals-today__food">{{ meal.food_text }}</span>
+                  <span class="meals-today__kcal">{{ meal.calories }} kcal</span>
+                </a>
+              {% else %}
+                <a href="{% url 'tracker' %}?date={{ today|date:'Y-m-d' }}&meal_type={{ meal.key }}" class="meals-today__pill--empty" title="Log this meal">
+                  Not planted yet
+                </a>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT COLUMN ───────────────── -->
+    <div class="today-right-col">
+
+      <!-- 1. Micronutrients card -->
+      <div class="micronutrients-card">
+        <h2 class="micronutrients-card__title">Micronutrients</h2>
+        {% for micro in micronutrients %}
+          <div class="micro-row">
+            <div class="micro-row__header">
+              <span class="micro-row__name">{{ micro.name }}</span>
+              <span class="micro-row__val">{{ micro.consumed|floatformat:1 }} / {{ micro.target|floatformat:0 }} {{ micro.unit }}</span>
+            </div>
+            <div class="micro-row__track">
+              <div class="micro-row__fill" style="width: {{ micro.pct }}%; background-color: {{ micro.color }};"></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- 2. Macros cards grid -->
+      <div class="macros-section">
+        <div class="macros-top-row">
+          <!-- Protein -->
+          <div class="macro-card macro-card--coral">
+            <div class="macro-card__title">{{ macro_cards.protein.label }}</div>
+            <div class="macro-card__val">{{ macro_cards.protein.consumed }}g</div>
+            <div class="macro-card__track">
+              <div class="macro-card__fill" style="width: {{ macro_cards.protein.pct }}%;"></div>
+            </div>
+          </div>
+
+          <!-- Carbs -->
+          <div class="macro-card macro-card--yellow">
+            <div class="macro-card__title">{{ macro_cards.carbs.label }}</div>
+            <div class="macro-card__val">{{ macro_cards.carbs.consumed }}g</div>
+            <div class="macro-card__track">
+              <div class="macro-card__fill" style="width: {{ macro_cards.carbs.pct }}%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fats -->
+        <div class="macro-card macro-card--sage">
+          <div class="macro-card__title">{{ macro_cards.fats.label }}</div>
+          <div class="macro-card__val">{{ macro_cards.fats.consumed }}g</div>
+          <div class="macro-card__track">
+            <div class="macro-card__fill" style="width: {{ macro_cards.fats.pct }}%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Sprig says card -->
+      <div class="sprig-says-card">
+        <div class="sprig-says__content">
+          <h3 class="sprig-says__title">Sprig says</h3>
+          <p class="sprig-says__text">{{ sprig_advice }}</p>
+        </div>
+        <div class="sprig-says__mascot">
+          <svg width="60" height="70" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig mascot">
+            <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#E88265" stroke="#2B2625" stroke-width="2"/>
+            <ellipse cx="30" cy="42" rx="16" ry="5" fill="#F49E86" stroke="#2B2625" stroke-width="2"/>
+            <line x1="30" y1="42" x2="30" y2="24" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M30 32 Q16 22 14 12 Q28 14 30 26" fill="#6AAF3D" stroke="#2B2625" stroke-width="2"/>
+            <path d="M30 28 Q44 18 46 8 Q32 12 30 22" fill="#4A7C2F" stroke="#2B2625" stroke-width="2"/>
+            <circle cx="26" cy="52" r="2" fill="#2B2625"/>
+            <circle cx="34" cy="52" r="2" fill="#2B2625"/>
+            <path d="M26 56 Q30 60 34 56" stroke="#2B2625" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="22" cy="54" r="2.5" fill="#FA8072" opacity="0.8"/>
+            <circle cx="38" cy="54" r="2.5" fill="#FA8072" opacity="0.8"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════
+       7-DAY TREND GRAPH (KEPT AS REQUESTED)
+  ═══════════════════════════════════════ -->
+  <section class="trend-section card-neo" style="background: #FFFFFF; padding: 28px; margin-bottom: 40px;" aria-labelledby="trend-heading">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+      <h2 class="section-heading" id="trend-heading" style="margin: 0;">7-Day Nutrient Trend</h2>
+      <div class="trend-controls" style="margin: 0;">
+        {% for key, label in trend_nutrients.items %}
+          <button
+            class="trend-btn {% if forloop.first %}trend-btn--active{% endif %}"
+            data-nutrient="{{ key }}"
+            aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
+          >{{ label }}</button>
+        {% empty %}
+          <button class="trend-btn trend-btn--active" data-nutrient="calories" aria-pressed="true">Calories</button>
+          <button class="trend-btn" data-nutrient="protein" aria-pressed="false">Protein</button>
+          <button class="trend-btn" data-nutrient="iron" aria-pressed="false">Iron</button>
+          <button class="trend-btn" data-nutrient="fiber" aria-pressed="false">Fiber</button>
+          <button class="trend-btn" data-nutrient="calcium" aria-pressed="false">Calcium</button>
+          <button class="trend-btn" data-nutrient="b12" aria-pressed="false">B12</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="chart-card__canvas-wrap chart-card__canvas-wrap--wide" style="height: 300px; position: relative;">
+      <canvas id="trendChart" aria-label="7-day nutrient trend chart" role="img"></canvas>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════
+       RECOMMENDED FOR YOU (KEPT AS REQUESTED)
+  ═══════════════════════════════════════ -->
+  <section class="reco-section card-neo" id="reco-section" style="background: #FFFFFF; padding: 28px; margin-bottom: 40px;" aria-labelledby="reco-heading">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+      <div>
+        <h2 class="section-heading" id="reco-heading" style="margin: 0 0 4px 0;">Recommended for You</h2>
+        <p style="margin: 0; color: var(--clr-text-muted); font-weight: 600;">Tailored plant-powered recipes to help fill your remaining nutrient gaps today</p>
+      </div>
+      <div class="reco-meal-tabs" style="margin: 0;">
+        {% for meal_key, meal_label in meal_types.items %}
+          <button
+            class="reco-tab {% if selected_meal == meal_key %}reco-tab--active{% endif %}"
+            data-meal="{{ meal_key }}"
+          >{{ meal_label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="recipe-grid" id="reco-grid">
+      {% for r in recommendations %}
+        {% include "partials/_recipe_card.html" with recipe=r %}
+      {% empty %}
+        <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+          <div style="font-size: 2.5rem; margin-bottom: 12px;">🌱</div>
+          <p class="empty-state__desc" style="font-size: 1.1rem; font-weight: 700;">All targets covered, or no recipes found for this meal type.</p>
+          <a href="{% url 'recipe_list' %}" class="btn btn-green btn--pill" style="margin-top: 12px;">Browse Recipe Drawer</a>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+
+<!-- Trend chart data injected as JSON -->
+<script id="chart-data" type="application/json">
+{
+  "trend": {{ trend_data|safe }}
+}
+</script>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // Parse trend data
+  let chartData = {};
+  const dataEl = document.getElementById('chart-data');
+  if (dataEl) {
+    try {
+      chartData = JSON.parse(dataEl.textContent);
+    } catch (e) {
+      console.warn('Could not parse chart data', e);
+    }
+  }
+
+  const palette = {
+    green:  '#3E6B27',
+    yellow: '#F7C548',
+    coral:  '#E55B3C',
+    teal:   '#3697A5',
+    sage:   '#A4C996',
+    dark:   '#2B2625',
+  };
+
+  const trendCtx = document.getElementById('trendChart');
+  let trendChart = null;
+
+  function buildTrendChart(nutrient) {
+    if (!trendCtx) return;
+    if (typeof Chart === 'undefined') {
+      console.warn('Chart.js not yet loaded, retrying in 50ms...');
+      setTimeout(() => buildTrendChart(nutrient), 50);
+      return;
+    }
+
+    const trend = (chartData.trend || {})[nutrient] || {};
+    const labels = trend.labels || [];
+    const values = trend.values || [];
+
+    if (trendChart) {
+      trendChart.destroy();
+      trendChart = null;
+    }
+
+    const nutColors = {
+      calories: palette.yellow,
+      protein:  palette.coral,
+      iron:     palette.coral,
+      fiber:    palette.sage,
+      calcium:  palette.teal,
+      b12:      palette.green,
+    };
+    const chosenColor = nutColors[nutrient] || palette.green;
+
+    const ctx = trendCtx.getContext('2d');
+    trendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: nutrient.charAt(0).toUpperCase() + nutrient.slice(1),
+          data: values,
+          borderColor: chosenColor,
+          backgroundColor: chosenColor + '30',
+          borderWidth: 3.5,
+          pointBackgroundColor: chosenColor,
+          pointBorderColor: '#2B2625',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointHoverBackgroundColor: '#FFFFFF',
+          pointHoverBorderColor: chosenColor,
+          pointHoverBorderWidth: 3,
+          tension: 0.35,
+          fill: true,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#2B2625',
+            titleFont: { family: 'Plus Jakarta Sans', weight: 'bold', size: 13 },
+            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+            cornerRadius: 10,
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: function (context) {
+                const units = {
+                  calories: ' kcal',
+                  protein: ' g',
+                  iron: ' mg',
+                  fiber: ' g',
+                  calcium: ' mg',
+                  b12: ' µg',
+                };
+                return (context.parsed.y !== undefined ? context.parsed.y : 0) + (units[nutrient] || '');
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#EEE9DF' },
+            ticks: {
+              font: { family: 'Plus Jakarta Sans', weight: '700' },
+              color: '#6E675F',
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { family: 'Plus Jakarta Sans', weight: '700' },
+              color: '#6E675F',
+            }
+          },
+        },
+      },
+    });
+  }
+
+  function initTrend() {
+    if (!trendCtx) return;
+
+    const buttons = document.querySelectorAll('.trend-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', function () {
+        buttons.forEach(b => {
+          b.classList.remove('trend-btn--active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        this.classList.add('trend-btn--active');
+        this.setAttribute('aria-pressed', 'true');
+        buildTrendChart(this.dataset.nutrient);
+      });
+    });
+
+    const activeBtn = document.querySelector('.trend-btn--active') || buttons[0];
+    const initialNutrient = activeBtn ? activeBtn.dataset.nutrient : 'calories';
+    buildTrendChart(initialNutrient);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTrend);
+  } else {
+    initTrend();
+  }
+
+  // ── Recommended meal type tabs ─────────────────────────────
+  document.querySelectorAll('.reco-tab').forEach(tab => {
+    tab.addEventListener('click', function () {
+      const mealType = this.dataset.meal;
+      const url = new URL(window.location.href);
+      url.searchParams.set('meal_type', mealType);
+      url.hash = 'reco-section';
+      window.location.href = url.toString();
+    });
+  });
+})();
+</script>
+{% endblock %}

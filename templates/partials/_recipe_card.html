@@ -1,0 +1,42 @@
+{% load static %}
+<a href="/recipes/{{ recipe.slug }}/" class="recipe-card-neo" title="{{ recipe.title }}">
+
+  <!-- Top Illustration Header with vibrant background -->
+  <div class="recipe-card-neo__header" style="background-color: {{ recipe.card_color }};">
+    {% if recipe.image %}
+      <img src="{{ recipe.image.url }}" alt="{{ recipe.title }}" class="recipe-card-neo__img">
+    {% elif recipe.card_avatar == 'tofu' %}
+      <svg width="68" height="68" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Tofu avatar">
+        <rect x="12" y="12" width="46" height="46" rx="14" fill="#FFFDF8" stroke="#2B2625" stroke-width="2.5"/>
+        <circle cx="27" cy="33" r="2.5" fill="#2B2625"/>
+        <circle cx="43" cy="33" r="2.5" fill="#2B2625"/>
+        <path d="M30 40 Q35 45 40 40" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      </svg>
+    {% elif recipe.card_avatar == 'tomato' %}
+      <svg width="68" height="68" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Tomato avatar">
+        <path d="M35 11 L31 18 L24 16 L29 22 L24 26 L32 24 L35 27 L38 24 L46 26 L41 22 L46 16 L39 18 Z" fill="#3E6B27" stroke="#2B2625" stroke-width="2"/>
+        <circle cx="35" cy="40" r="22" fill="#E55B3C" stroke="#2B2625" stroke-width="2.5"/>
+        <circle cx="28" cy="38" r="2.5" fill="#2B2625"/>
+        <circle cx="42" cy="38" r="2.5" fill="#2B2625"/>
+        <path d="M31 46 Q35 50 39 46" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      </svg>
+    {% else %}
+      <svg width="68" height="68" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Bowl avatar">
+        <ellipse cx="35" cy="28" rx="18" ry="12" fill="#FFFDF8" stroke="#2B2625" stroke-width="2.5"/>
+        <path d="M16 28 C16 46 24 53 35 53 C46 53 54 46 54 28 Z" fill="#3697A5" stroke="#2B2625" stroke-width="2.5"/>
+        <circle cx="29" cy="39" r="2" fill="#2B2625"/>
+        <circle cx="41" cy="39" r="2" fill="#2B2625"/>
+        <path d="M32 44 Q35 47 38 44" stroke="#2B2625" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+    {% endif %}
+  </div>
+
+  <!-- Bottom Details Body -->
+  <div class="recipe-card-neo__body">
+    <h3 class="recipe-card-neo__title">{{ recipe.title }}</h3>
+    <div class="recipe-card-neo__pill">
+      {{ recipe.highlight_nutrient }}
+    </div>
+  </div>
+
+</a>

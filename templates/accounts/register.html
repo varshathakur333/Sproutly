@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Sproutly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/sproutly.css' %}">
+</head>
+<body class="auth-body">
+
+  <div class="auth-page">
+    <div class="auth-card">
+
+      <!-- Sprig mascot -->
+      <div class="auth-card__mascot">
+        <svg width="60" height="70" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig mascot">
+          <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#C47F4A"/>
+          <ellipse cx="30" cy="42" rx="16" ry="5" fill="#D4956A"/>
+          <line x1="30" y1="42" x2="30" y2="22" stroke="#4A7C2F" stroke-width="3" stroke-linecap="round"/>
+          <path d="M30 30 Q18 20 16 10 Q28 14 30 24" fill="#6AAF3D"/>
+          <path d="M30 26 Q42 16 44 6 Q32 10 30 20" fill="#4A7C2F"/>
+          <circle cx="26" cy="52" r="1.5" fill="#8B5E2A"/>
+          <circle cx="34" cy="52" r="1.5" fill="#8B5E2A"/>
+          <path d="M26 56 Q30 59 34 56" stroke="#8B5E2A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <circle cx="23" cy="54" r="2" fill="#E8A87C" opacity="0.6"/>
+          <circle cx="37" cy="54" r="2" fill="#E8A87C" opacity="0.6"/>
+        </svg>
+      </div>
+
+      <h1 class="auth-card__heading">Join Sproutly 🌱</h1>
+      <p class="auth-card__subtext">Start your plant-powered journey today.</p>
+
+      <form method="post" action="{% url 'register' %}" class="auth-form" novalidate>
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="form-group">
+          <label class="form-label visually-hidden" for="id_username">Username</label>
+          <input
+            type="text"
+            id="id_username"
+            name="username"
+            class="form-control form-control--pill{% if form.username.errors %} form-control--error{% endif %}"
+            placeholder="Username"
+            value="{{ form.username.value|default:'' }}"
+            autocomplete="username"
+            required
+          >
+          {% if form.username.errors %}
+            <ul class="form-errors">
+              {% for error in form.username.errors %}
+                <li class="form-error">{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label class="form-label visually-hidden" for="id_email">Email</label>
+          <input
+            type="email"
+            id="id_email"
+            name="email"
+            class="form-control form-control--pill{% if form.email.errors %} form-control--error{% endif %}"
+            placeholder="Email address"
+            value="{{ form.email.value|default:'' }}"
+            autocomplete="email"
+          >
+          {% if form.email.errors %}
+            <ul class="form-errors">
+              {% for error in form.email.errors %}
+                <li class="form-error">{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- First name -->
+        <div class="form-group">
+          <label class="form-label visually-hidden" for="id_first_name">First name</label>
+          <input
+            type="text"
+            id="id_first_name"
+            name="first_name"
+            class="form-control form-control--pill{% if form.first_name.errors %} form-control--error{% endif %}"
+            placeholder="First name"
+            value="{{ form.first_name.value|default:'' }}"
+            autocomplete="given-name"
+          >
+          {% if form.first_name.errors %}
+            <ul class="form-errors">
+              {% for error in form.first_name.errors %}
+                <li class="form-error">{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label class="form-label visually-hidden" for="id_password1">Password</label>
+          <input
+            type="password"
+            id="id_password1"
+            name="password1"
+            class="form-control form-control--pill{% if form.password1.errors %} form-control--error{% endif %}"
+            placeholder="Password"
+            autocomplete="new-password"
+            required
+          >
+          {% if form.password1.errors %}
+            <ul class="form-errors">
+              {% for error in form.password1.errors %}
+                <li class="form-error">{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Confirm password -->
+        <div class="form-group">
+          <label class="form-label visually-hidden" for="id_password2">Confirm password</label>
+          <input
+            type="password"
+            id="id_password2"
+            name="password2"
+            class="form-control form-control--pill{% if form.password2.errors %} form-control--error{% endif %}"
+            placeholder="Confirm password"
+            autocomplete="new-password"
+            required
+          >
+          {% if form.password2.errors %}
+            <ul class="form-errors">
+              {% for error in form.password2.errors %}
+                <li class="form-error">{{ error }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+          <div class="form-errors form-errors--nonfield">
+            {% for error in form.non_field_errors %}
+              <p class="form-error">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-dark btn--full-width btn--pill">Create account</button>
+      </form>
+
+      <p class="auth-card__footer-link">
+        Already have an account? <a href="{% url 'login' %}">Log in</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="{% static 'js/sproutly.js' %}"></script>
+</body>
+</html>

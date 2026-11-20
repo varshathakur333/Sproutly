@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if recipe %}Edit {{ recipe.title }}{% else %}Plant a new recipe{% endif %} — Sproutly{% endblock %}
+
+{% block content %}
+<div class="recipe-form-page container" style="max-width: 1100px; padding-bottom: 60px;">
+
+  <!-- Page Header -->
+  <header class="page-header" style="margin-bottom: 24px;">
+    <p class="page-header__eyebrow" style="font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--clr-dark); margin-bottom: 4px;">
+      Add it to the recipe drawer
+    </p>
+    <h1 class="page-header__title" style="font-family: var(--font-display); font-weight: 900; font-size: 2.8rem; color: var(--clr-dark); margin: 0;">
+      {% if recipe %}Edit {{ recipe.title }}{% else %}Plant a new recipe{% endif %}
+    </h1>
+  </header>
+
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    id="recipe-form"
+    class="recipe-form-grid"
+    novalidate
+    style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 28px; align-items: start;"
+  >
+    {% csrf_token %}
+
+    <!-- ══════════════════════════════════
+         LEFT COLUMN
+    ═══════════════════════════════════════ -->
+    <div class="recipe-form-left" style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- 1. Recipe Details Card (White) -->
+      <section class="card-neo" style="background: #FFFFFF; padding: 28px; border-radius: var(--radius-card); border: var(--border-thick);">
+        <!-- Recipe name -->
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" for="{{ form.title.id_for_label }}" style="font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; display: block;">
+            Recipe name
+          </label>
+          <input
+            type="text"
+            id="{{ form.title.id_for_label }}"
+            name="{{ form.title.html_name }}"
+            class="form-control form-control--pill{% if form.title.errors %} form-control--error{% endif %}"
+            value="{{ form.title.value|default:'' }}"
+            placeholder="e.g. Tomato Dal"
+            required
+            style="height: 48px; font-weight: 700;"
+          >
+          {% if form.title.errors %}
+            <ul class="form-errors">{% for e in form.title.errors %}<li class="form-error">{{ e }}</li>{% endfor %}</ul>
+          {% endif %}
+        </div>
+
+        <!-- Short description -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" for="{{ form.description.id_for_label }}" style="font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; display: block;">
+            Short description
+          </label>
+          <input
+            type="text"
+            id="{{ form.description.id_for_label }}"
+            name="{{ form.description.html_name }}"
+            class="form-control form-control--pill{% if form.description.errors %} form-control--error{% endif %}"
+            value="{{ form.description.value|default:'' }}"
+            placeholder="What makes it good?"
+            style="height: 48px;"
+          >
+          {% if form.description.errors %}
+            <ul class="form-errors">{% for e in form.description.errors %}<li class="form-error">{{ e }}</li>{% endfor %}</ul>
+          {% endif %}
+        </div>
+
+        <!-- Meal Type Pills -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; display: block;">Meal type</label>
+          <input type="hidden" name="{{ form.meal_type.html_name }}" id="selected-meal-type" value="{{ form.meal_type.value|default:'dinner' }}">
+
+          <div class="meal-type-pills" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="meal-pill-btn {% if form.meal_type.value == 'dinner' or not form.meal_type.value %}meal-pill-btn--active{% endif %}" data-meal="dinner">
+              Dinner
+            </button>
+            <button type="button" class="meal-pill-btn {% if form.meal_type.value == 'breakfast' %}meal-pill-btn--active{% endif %}" data-meal="breakfast">
+              Breakfast
+            </button>
+            <button type="button" class="meal-pill-btn {% if form.meal_type.value == 'lunch' %}meal-pill-btn--active{% endif %}" data-meal="lunch">
+              Lunch
+            </button>
+            <button type="button" class="meal-pill-btn {% if form.meal_type.value == 'snack' %}meal-pill-btn--active{% endif %}" data-meal="snack">
+              Snack
+            </button>
+          </div>
+        </div>
+
+        <!-- Servings & Prep time -->
+        <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label" for="{{ form.servings.id_for_label }}" style="font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; display: block;">
+              Servings
+            </label>
+            <input
+              type="number"
+              id="{{ form.servings.id_for_label }}"
+              name="{{ form.servings.html_name }}"
+              class="form-control form-control--pill"
+              min="1"
+              value="{{ form.servings.value|default:2 }}"
+              style="height: 48px; text-align: center; font-weight: 800;"
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.prep_time.id_for_label }}" style="font-weight: 800; font-size: 0.95rem; margin-bottom: 6px; display: block;">
+              Prep time (min)
+            </label>
+            <input
+              type="number"
+              id="{{ form.prep_time.id_for_label }}"
+              name="{{ form.prep_time.html_name }}"
+              class="form-control form-control--pill"
+              min="0"
+              value="{{ form.prep_time.value|default:25 }}"
+              style="height: 48px; text-align: center; font-weight: 800;"
+            >
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-top: 14px;">
+          <!-- Diet type -->
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label" for="{{ form.diet_type.id_for_label }}" style="font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">Diet</label>
+            <select id="{{ form.diet_type.id_for_label }}" name="{{ form.diet_type.html_name }}" class="form-control form-control--pill goals-table__select" style="height: 42px;">
+              {% for value, label in form.diet_type.field.choices %}
+                <option value="{{ value }}" {% if form.diet_type.value == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Public Checkbox -->
+          <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 22px;">
+            <input type="checkbox" name="{{ form.is_public.html_name }}" id="id_is_public" {% if form.is_public.value != False %}checked{% endif %} class="form-check-input">
+            <label for="id_is_public" style="font-weight: 700; font-size: 0.9rem; cursor: pointer;">Public recipe</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Ingredients Card (Sage Green #A4C996) -->
+      <section class="card-neo" style="background-color: var(--clr-sage); padding: 26px 28px; border-radius: var(--radius-card); border: var(--border-thick);">
+        <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.4rem; color: var(--clr-dark); margin: 0 0 16px 0;">
+          Ingredients
+        </h2>
+
+        {{ ingredient_formset.management_form }}
+        <div class="ingredient-rows-container" id="ingredient-formset" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+          {% for ing_form in ingredient_formset %}
+            <div class="ingredient-row form-ingredient-row" data-index="{{ forloop.counter0 }}" style="display: grid; grid-template-columns: 2fr 1.2fr auto; gap: 10px; align-items: center;">
+              {{ ing_form.id }}
+              {% if ing_form.DELETE %}{{ ing_form.DELETE }}{% endif %}
+
+              <!-- Ingredient name -->
+              <input
+                type="text"
+                name="{{ ing_form.ingredient.html_name }}"
+                class="form-control form-control--pill ingredient-autocomplete"
+                placeholder="Ingredient name…"
+                value="{{ ing_form.ingredient.value|default:'' }}"
+                autocomplete="off"
+                style="height: 46px; background: #FFFFFF; font-weight: 700;"
+              >
+
+              <!-- Grams -->
+              <input
+                type="number"
+                name="{{ ing_form.grams.html_name }}"
+                class="form-control form-control--pill ingredient-grams"
+                placeholder="Grams (g)"
+                min="0"
+                step="0.1"
+                value="{{ ing_form.grams.value|default:'' }}"
+                style="height: 46px; background: #FFFFFF; text-align: center; font-weight: 700;"
+              >
+
+              <input type="hidden" name="{{ ing_form.display_text.html_name }}" value="{{ ing_form.display_text.value|default:'' }}">
+
+              <!-- Remove circle button -->
+              <button type="button" class="btn-remove-circle ingredient-remove-btn" aria-label="Remove ingredient">×</button>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Dashed + Add Ingredient pill -->
+        <button
+          type="button"
+          id="add-ingredient-btn"
+          style="background: transparent; border: 2px dashed var(--clr-dark); border-radius: var(--radius-full); padding: 8px 24px; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; color: var(--clr-dark); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;"
+        >
+          + add ingredient
+        </button>
+      </section>
+
+      <!-- 3. Method Card (White) -->
+      <section class="card-neo" style="background: #FFFFFF; padding: 26px 28px; border-radius: var(--radius-card); border: var(--border-thick);">
+        <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.4rem; color: var(--clr-dark); margin: 0 0 16px 0;">
+          Method
+        </h2>
+        <textarea
+          id="{{ form.instructions.id_for_label }}"
+          name="{{ form.instructions.html_name }}"
+          class="form-control{% if form.instructions.errors %} form-control--error{% endif %}"
+          rows="6"
+          placeholder="Step by step instructions"
+          required
+          style="border: var(--border-thick); border-radius: 18px; padding: 16px; font-weight: 600; font-size: 0.98rem; width: 100%; box-sizing: border-box;"
+        >{{ form.instructions.value|default:'' }}</textarea>
+        {% if form.instructions.errors %}
+          <ul class="form-errors">{% for e in form.instructions.errors %}<li class="form-error">{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+      </section>
+
+    </div>
+
+    <!-- ══════════════════════════════════
+         RIGHT COLUMN
+    ═══════════════════════════════════════ -->
+    <div class="recipe-form-right" style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- 1. Live Nutrition Preview Card (Teal #3697A5) -->
+      <div class="card-neo" style="background-color: var(--clr-teal); border: var(--border-thick); border-radius: var(--radius-card); padding: 26px 28px; color: var(--clr-dark);">
+        <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.35rem; color: var(--clr-dark); margin: 0 0 18px 0;">
+          Live nutrition preview
+        </h2>
+
+        <!-- Calories -->
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Calories</span>
+            <span><span id="prev-calories">260</span> kcal</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="bar-calories" style="height: 100%; background-color: var(--clr-yellow); width: 45%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <!-- Protein -->
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Protein</span>
+            <span><span id="prev-protein">18</span> g</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="bar-protein" style="height: 100%; background-color: #E8954A; width: 60%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <!-- Iron -->
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Iron</span>
+            <span><span id="prev-iron">7</span> mg</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="bar-iron" style="height: 100%; background-color: var(--clr-coral); width: 40%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <!-- Fiber -->
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+            <span>Fiber</span>
+            <span><span id="prev-fiber">9</span> g</span>
+          </div>
+          <div style="height: 12px; background-color: #FFFFFF; border: 1.5px solid var(--clr-dark); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="bar-fiber" style="height: 100%; background-color: var(--clr-sage); width: 35%; border-radius: var(--radius-full);"></div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.85rem; font-weight: 700; color: #2B2625; margin: 0; opacity: 0.85;">
+          per serving, updates as you add ingredients
+        </p>
+      </div>
+
+      <!-- 2. Save Recipe Card (Gold/Yellow #F7C548 with Sprig) -->
+      <div class="card-neo" style="background-color: var(--clr-yellow); border: var(--border-thick); border-radius: var(--radius-card); padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+        <button type="submit" class="btn btn-green btn--pill" style="padding: 14px 32px; font-size: 1.1rem; font-weight: 900;">
+          Save recipe
+        </button>
+
+        <div style="flex-shrink: 0;">
+          <svg width="56" height="66" viewBox="0 0 60 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sprig mascot">
+            <path d="M14 42 L18 62 Q30 65 42 62 L46 42 Z" fill="#E88265" stroke="#2B2625" stroke-width="2"/>
+            <ellipse cx="30" cy="42" rx="16" ry="5" fill="#F49E86" stroke="#2B2625" stroke-width="2"/>
+            <line x1="30" y1="42" x2="30" y2="24" stroke="#2B2625" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M30 32 Q16 22 14 12 Q28 14 30 26" fill="#6AAF3D" stroke="#2B2625" stroke-width="2"/>
+            <path d="M30 28 Q44 18 46 8 Q32 12 30 22" fill="#4A7C2F" stroke="#2B2625" stroke-width="2"/>
+            <circle cx="26" cy="52" r="2" fill="#2B2625"/>
+            <circle cx="34" cy="52" r="2" fill="#2B2625"/>
+            <path d="M26 56 Q30 60 34 56" stroke="#2B2625" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="22" cy="54" r="2.5" fill="#FA8072" opacity="0.8"/>
+            <circle cx="38" cy="54" r="2.5" fill="#FA8072" opacity="0.8"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+  </form>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // ── Meal Type Pill Selector ──────────────────────────────
+  const mealInput = document.getElementById('selected-meal-type');
+  document.querySelectorAll('.meal-pill-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.meal-pill-btn').forEach(b => b.classList.remove('meal-pill-btn--active'));
+      this.classList.add('meal-pill-btn--active');
+      if (mealInput) mealInput.value = this.dataset.meal;
+    });
+  });
+
+  // ── Add ingredient row ────────────────────────────────────
+  const addBtn     = document.getElementById('add-ingredient-btn');
+  const formset    = document.getElementById('ingredient-formset');
+  const totalForms = document.getElementById('id_ingredients-TOTAL_FORMS');
+
+  if (addBtn && formset && totalForms) {
+    addBtn.addEventListener('click', function () {
+      const idx    = parseInt(totalForms.value);
+      const prefix = 'ingredients-' + idx;
+      const row    = document.createElement('div');
+      row.className = 'ingredient-row form-ingredient-row';
+      row.dataset.index = idx;
+      row.style.cssText = 'display: grid; grid-template-columns: 2fr 1.2fr auto; gap: 10px; align-items: center;';
+      row.innerHTML = `
+        <input type="text" name="${prefix}-ingredient" class="form-control form-control--pill ingredient-autocomplete" placeholder="Ingredient name…" autocomplete="off" style="height: 46px; background: #FFFFFF; font-weight: 700;">
+        <input type="number" name="${prefix}-grams" class="form-control form-control--pill ingredient-grams" placeholder="Grams (g)" min="0" step="0.1" style="height: 46px; background: #FFFFFF; text-align: center; font-weight: 700;">
+        <input type="hidden" name="${prefix}-display_text" value="">
+        <button type="button" class="btn-remove-circle ingredient-remove-btn" aria-label="Remove ingredient">×</button>
+      `;
+      formset.appendChild(row);
+      totalForms.value = idx + 1;
+      bindLiveCalc();
+    });
+  }
+
+  // ── Remove ingredient row ─────────────────────────────────
+  document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('ingredient-remove-btn')) {
+      const row = e.target.closest('.ingredient-row');
+      if (row) {
+        const delCb = row.querySelector('[name$="-DELETE"]');
+        if (delCb) {
+          delCb.checked = true;
+          row.style.display = 'none';
+        } else {
+          row.remove();
+          if (totalForms) totalForms.value = Math.max(0, parseInt(totalForms.value) - 1);
+        }
+        recalcNutrition();
+      }
+    }
+  });
+
+  // ── Live Nutrition Estimation ──────────────────────────────
+  const srvInput = document.getElementById('{{ form.servings.id_for_label }}');
+
+  function recalcNutrition() {
+    let totGrams = 0;
+    document.querySelectorAll('.ingredient-grams').forEach(inp => {
+      totGrams += parseFloat(inp.value) || 0;
+    });
+
+    const servings = Math.max(1, parseFloat(srvInput ? srvInput.value : 2) || 2);
+
+    // Approximate plant nutrition per 100g averaged over whole foods:
+    // ~150 kcal/100g, ~8g protein, ~2.5mg iron, ~4g fiber
+    const estCal = Math.round((totGrams * 1.4) / servings);
+    const estProt = Math.round((totGrams * 0.08) / servings);
+    const estIron = Math.round(((totGrams * 0.028) / servings) * 10) / 10;
+    const estFiber = Math.round(((totGrams * 0.04) / servings) * 10) / 10;
+
+    const calEl = document.getElementById('prev-calories');
+    const protEl = document.getElementById('prev-protein');
+    const ironEl = document.getElementById('prev-iron');
+    const fiberEl = document.getElementById('prev-fiber');
+
+    if (calEl) calEl.textContent = estCal || '260';
+    if (protEl) protEl.textContent = estProt || '18';
+    if (ironEl) ironEl.textContent = estIron || '7';
+    if (fiberEl) fiberEl.textContent = estFiber || '9';
+
+    const barCal = document.getElementById('bar-calories');
+    const barProt = document.getElementById('bar-protein');
+    const barIron = document.getElementById('bar-iron');
+    const barFiber = document.getElementById('bar-fiber');
+
+    if (barCal) barCal.style.width = Math.min(100, Math.round((estCal || 260) / 600 * 100)) + '%';
+    if (barProt) barProt.style.width = Math.min(100, Math.round((estProt || 18) / 30 * 100)) + '%';
+    if (barIron) barIron.style.width = Math.min(100, Math.round((estIron || 7) / 18 * 100)) + '%';
+    if (barFiber) barFiber.style.width = Math.min(100, Math.round((estFiber || 9) / 25 * 100)) + '%';
+  }
+
+  function bindLiveCalc() {
+    document.querySelectorAll('.ingredient-grams').forEach(inp => {
+      inp.removeEventListener('input', recalcNutrition);
+      inp.addEventListener('input', recalcNutrition);
+    });
+  }
+
+  if (srvInput) srvInput.addEventListener('input', recalcNutrition);
+  bindLiveCalc();
+  recalcNutrition();
+})();
+</script>
+{% endblock %}
