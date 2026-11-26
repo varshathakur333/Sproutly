@@ -139,11 +139,15 @@ def filter_recipes(
     # --- Text search ---
     q = params.get('q', '').strip()
     if q:
-        base_qs = base_qs.filter(
-            Q(title__icontains=q)
-            | Q(description__icontains=q)
-            | Q(recipe_ingredients__ingredient__name__icontains=q)
-        ).distinct()
+        terms = q.split()
+        for term in terms:
+            base_qs = base_qs.filter(
+                Q(title__icontains=term)
+                | Q(description__icontains=term)
+                | Q(recipe_ingredients__ingredient__name__icontains=term)
+                | Q(recipe_ingredients__display_text__icontains=term)
+            )
+        base_qs = base_qs.distinct()
 
     # --- Diet / meal type ---
     if params.get('diet_type'):
@@ -154,7 +158,9 @@ def filter_recipes(
     # --- Max prep time ---
     if params.get('max_prep_time'):
         try:
-            base_qs = base_qs.filter(prep_time__lte=int(params['max_prep_time']))
+            m = int(params['max_prep_time'])
+            if m < 60:
+                base_qs = base_qs.filter(prep_time__lte=m)
         except (ValueError, TypeError):
             pass
 

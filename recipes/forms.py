@@ -34,8 +34,26 @@ class RecipeForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['cook_time'].required = False
+        self.fields['cook_time'].initial = 0
+        self.fields['prep_time'].required = False
+        self.fields['prep_time'].initial = 15
+        self.fields['instructions'].required = False
+        self.fields['description'].required = False
         if 'image' in self.fields:
             self.fields['image'].widget.attrs.update({'class': 'form-control', 'accept': 'image/*'})
+
+    def clean_cook_time(self):
+        val = self.cleaned_data.get('cook_time')
+        return val if val is not None else 0
+
+    def clean_prep_time(self):
+        val = self.cleaned_data.get('prep_time')
+        return val if val is not None else 15
+
+    def clean_instructions(self):
+        val = self.cleaned_data.get('instructions')
+        return val.strip() if val else 'Mix ingredients and enjoy!'
 
 
 class RecipeNutritionManualForm(forms.Form):

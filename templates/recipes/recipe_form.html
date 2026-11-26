@@ -146,15 +146,31 @@
       </section>
 
       <!-- 2. Ingredients Card (Sage Green #A4C996) -->
-      <section class="card-neo" style="background-color: var(--clr-sage); padding: 26px 28px; border-radius: var(--radius-card); border: var(--border-thick);">
-        <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.4rem; color: var(--clr-dark); margin: 0 0 16px 0;">
-          Ingredients
-        </h2>
+      <section class="card-neo card-neo--ingredients" style="background-color: var(--clr-sage); padding: 26px 28px; border-radius: var(--radius-card); border: var(--border-thick); box-shadow: 4px 4px 0 var(--clr-dark);">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h2 style="font-family: var(--font-display); font-weight: 900; font-size: 1.45rem; color: var(--clr-dark); margin: 0 0 4px 0;">
+              Ingredients
+            </h2>
+            <p style="margin: 0; font-size: 0.88rem; font-weight: 700; color: #2B2625; opacity: 0.85;">
+              Add what goes into your dish. Enter kitchen amounts (e.g. 1 cup) and grams for nutrient calculation.
+            </p>
+          </div>
+        </div>
 
         {{ ingredient_formset.management_form }}
-        <div class="ingredient-rows-container" id="ingredient-formset" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+
+        <!-- Table / Column Headers -->
+        <div class="ingredient-headers" style="display: grid; grid-template-columns: 2fr 1.6fr 1.1fr 40px; gap: 10px; padding: 0 4px; margin-bottom: 8px;">
+          <span style="font-family: var(--font-display); font-weight: 800; font-size: 0.85rem; color: var(--clr-dark); text-transform: uppercase; letter-spacing: 0.5px;">Ingredient</span>
+          <span style="font-family: var(--font-display); font-weight: 800; font-size: 0.85rem; color: var(--clr-dark); text-transform: uppercase; letter-spacing: 0.5px;">Amount / Measure</span>
+          <span style="font-family: var(--font-display); font-weight: 800; font-size: 0.85rem; color: var(--clr-dark); text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Grams (g)</span>
+          <span></span>
+        </div>
+
+        <div class="ingredient-rows-container" id="ingredient-formset" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
           {% for ing_form in ingredient_formset %}
-            <div class="ingredient-row form-ingredient-row" data-index="{{ forloop.counter0 }}" style="display: grid; grid-template-columns: 2fr 1.2fr auto; gap: 10px; align-items: center;">
+            <div class="ingredient-row form-ingredient-row" data-index="{{ forloop.counter0 }}" style="display: grid; grid-template-columns: 2fr 1.6fr 1.1fr 40px; gap: 10px; align-items: center;">
               {{ ing_form.id }}
               {% if ing_form.DELETE %}{{ ing_form.DELETE }}{% endif %}
 
@@ -163,10 +179,21 @@
                 type="text"
                 name="{{ ing_form.ingredient.html_name }}"
                 class="form-control form-control--pill ingredient-autocomplete"
-                placeholder="Ingredient name…"
+                placeholder="e.g. Red Lentils"
                 value="{{ ing_form.ingredient.value|default:'' }}"
                 autocomplete="off"
-                style="height: 46px; background: #FFFFFF; font-weight: 700;"
+                list="common-ingredients-list"
+                style="height: 46px; background: #FFFFFF; font-weight: 700; border: 2px solid var(--clr-dark); box-shadow: 2px 2px 0 var(--clr-dark);"
+              >
+
+              <!-- Display text (Amount / Serving) -->
+              <input
+                type="text"
+                name="{{ ing_form.display_text.html_name }}"
+                class="form-control form-control--pill ingredient-display"
+                placeholder="e.g. 1 cup, 2 medium"
+                value="{{ ing_form.display_text.value|default:'' }}"
+                style="height: 46px; background: #FFFFFF; font-weight: 700; border: 2px solid var(--clr-dark); box-shadow: 2px 2px 0 var(--clr-dark);"
               >
 
               <!-- Grams -->
@@ -174,28 +201,58 @@
                 type="number"
                 name="{{ ing_form.grams.html_name }}"
                 class="form-control form-control--pill ingredient-grams"
-                placeholder="Grams (g)"
+                placeholder="e.g. 100"
                 min="0"
                 step="0.1"
                 value="{{ ing_form.grams.value|default:'' }}"
-                style="height: 46px; background: #FFFFFF; text-align: center; font-weight: 700;"
+                style="height: 46px; background: #FFFFFF; text-align: center; font-weight: 800; border: 2px solid var(--clr-dark); box-shadow: 2px 2px 0 var(--clr-dark);"
               >
 
-              <input type="hidden" name="{{ ing_form.display_text.html_name }}" value="{{ ing_form.display_text.value|default:'' }}">
-
               <!-- Remove circle button -->
-              <button type="button" class="btn-remove-circle ingredient-remove-btn" aria-label="Remove ingredient">×</button>
+              <button
+                type="button"
+                class="ingredient-remove-btn"
+                aria-label="Remove ingredient"
+                title="Remove ingredient"
+                style="width: 40px; height: 40px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--clr-dark); font-size: 1.25rem; font-weight: 900; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 var(--clr-dark); transition: all 0.15s ease; color: #E55B3C;"
+              >×</button>
             </div>
           {% endfor %}
         </div>
+
+        <datalist id="common-ingredients-list">
+          <option value="Red Lentils">
+          <option value="Yellow Moong Dal">
+          <option value="Chickpeas">
+          <option value="Tofu (Firm)">
+          <option value="Tofu (Silken)">
+          <option value="Paneer">
+          <option value="Spinach">
+          <option value="Tomato">
+          <option value="Onion">
+          <option value="Garlic">
+          <option value="Ginger">
+          <option value="Quinoa">
+          <option value="Brown Rice">
+          <option value="Basmati Rice">
+          <option value="Rolled Oats">
+          <option value="Chia Seeds">
+          <option value="Flax Seeds">
+          <option value="Nutritional Yeast">
+          <option value="Soy Milk">
+          <option value="Almond Milk">
+          <option value="Olive Oil">
+          <option value="Cumin Seeds">
+          <option value="Turmeric">
+        </datalist>
 
         <!-- Dashed + Add Ingredient pill -->
         <button
           type="button"
           id="add-ingredient-btn"
-          style="background: transparent; border: 2px dashed var(--clr-dark); border-radius: var(--radius-full); padding: 8px 24px; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; color: var(--clr-dark); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;"
+          style="background: #FFFFFF; border: 2.5px dashed var(--clr-dark); border-radius: var(--radius-full); padding: 10px 24px; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; color: var(--clr-dark); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 2px 2px 0 var(--clr-dark); transition: transform 0.1s ease;"
         >
-          + add ingredient
+          <span style="font-size: 1.2rem; font-weight: 900; color: #3E6B27;">+</span> add ingredient
         </button>
       </section>
 
@@ -333,12 +390,12 @@
       const row    = document.createElement('div');
       row.className = 'ingredient-row form-ingredient-row';
       row.dataset.index = idx;
-      row.style.cssText = 'display: grid; grid-template-columns: 2fr 1.2fr auto; gap: 10px; align-items: center;';
+      row.style.cssText = 'display: grid; grid-template-columns: 2fr 1.6fr 1.1fr 40px; gap: 10px; align-items: center;';
       row.innerHTML = `
-        <input type="text" name="${prefix}-ingredient" class="form-control form-control--pill ingredient-autocomplete" placeholder="Ingredient name…" autocomplete="off" style="height: 46px; background: #FFFFFF; font-weight: 700;">
-        <input type="number" name="${prefix}-grams" class="form-control form-control--pill ingredient-grams" placeholder="Grams (g)" min="0" step="0.1" style="height: 46px; background: #FFFFFF; text-align: center; font-weight: 700;">
-        <input type="hidden" name="${prefix}-display_text" value="">
-        <button type="button" class="btn-remove-circle ingredient-remove-btn" aria-label="Remove ingredient">×</button>
+        <input type="text" name="${prefix}-ingredient" class="form-control form-control--pill ingredient-autocomplete" placeholder="e.g. Red Lentils" autocomplete="off" list="common-ingredients-list" style="height: 46px; background: #FFFFFF; font-weight: 700; border: 2px solid var(--clr-dark); box-shadow: 2px 2px 0 var(--clr-dark);">
+        <input type="text" name="${prefix}-display_text" class="form-control form-control--pill ingredient-display" placeholder="e.g. 1 cup, 2 medium" style="height: 46px; background: #FFFFFF; font-weight: 700; border: 2px solid var(--clr-dark); box-shadow: 2px 2px 0 var(--clr-dark);">
+        <input type="number" name="${prefix}-grams" class="form-control form-control--pill ingredient-grams" placeholder="e.g. 100" min="0" step="0.1" style="height: 46px; background: #FFFFFF; text-align: center; font-weight: 800; border: 2px solid var(--clr-dark); box-shadow: 2px 2px 0 var(--clr-dark);">
+        <button type="button" class="ingredient-remove-btn" aria-label="Remove ingredient" title="Remove ingredient" style="width: 40px; height: 40px; border-radius: 50%; background: #FFFFFF; border: 2px solid var(--clr-dark); font-size: 1.25rem; font-weight: 900; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 var(--clr-dark); color: #E55B3C;">×</button>
       `;
       formset.appendChild(row);
       totalForms.value = idx + 1;

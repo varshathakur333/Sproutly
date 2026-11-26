@@ -157,11 +157,18 @@ def recipe_create(request):
                     grams = ing_data.get('grams')
                     display_text = ing_data.get('display_text', '').strip()
 
-                    if ing_name and grams:
-                        ingredient, _ = Ingredient.objects.get_or_create(
-                            name=ing_name,
-                            defaults={'category': 'other', 'is_vegan': recipe.diet_type == 'vegan'}
-                        )
+                    if ing_name:
+                        if not grams or grams <= 0:
+                            grams = Decimal('50')
+                        if not display_text:
+                            display_text = f"{int(grams)}g"
+                        ingredient = Ingredient.objects.filter(name__iexact=ing_name).first()
+                        if not ingredient:
+                            ingredient = Ingredient.objects.create(
+                                name=ing_name,
+                                category='other',
+                                is_vegan=(recipe.diet_type == 'vegan')
+                            )
                         RecipeIngredient.objects.create(
                             recipe=recipe,
                             ingredient=ingredient,
@@ -227,11 +234,18 @@ def recipe_edit(request, slug):
                     grams = ing_data.get('grams')
                     display_text = ing_data.get('display_text', '').strip()
 
-                    if ing_name and grams:
-                        ingredient, _ = Ingredient.objects.get_or_create(
-                            name=ing_name,
-                            defaults={'category': 'other', 'is_vegan': recipe.diet_type == 'vegan'}
-                        )
+                    if ing_name:
+                        if not grams or grams <= 0:
+                            grams = Decimal('50')
+                        if not display_text:
+                            display_text = f"{int(grams)}g"
+                        ingredient = Ingredient.objects.filter(name__iexact=ing_name).first()
+                        if not ingredient:
+                            ingredient = Ingredient.objects.create(
+                                name=ing_name,
+                                category='other',
+                                is_vegan=(recipe.diet_type == 'vegan')
+                            )
                         RecipeIngredient.objects.create(
                             recipe=recipe,
                             ingredient=ingredient,

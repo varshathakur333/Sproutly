@@ -1786,9 +1786,17 @@ select.form-control {
   margin-bottom: 16px;
 }
 
+.ingredient-headers {
+  display: grid;
+  grid-template-columns: 2fr 1.6fr 1.1fr 40px;
+  gap: 10px;
+  padding: 0 4px;
+  margin-bottom: 8px;
+}
+
 .form-ingredient-row {
   display: grid;
-  grid-template-columns: 1.8fr 1fr auto;
+  grid-template-columns: 2fr 1.6fr 1.1fr 40px;
   gap: 10px;
   align-items: center;
 }
@@ -1797,6 +1805,39 @@ select.form-control {
   border: var(--border-thick);
   border-radius: var(--radius-full);
   height: 46px;
+}
+
+.ingredient-remove-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: var(--border-thick);
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 var(--clr-dark);
+  transition: all 0.15s ease;
+  color: #E55B3C;
+}
+
+.ingredient-remove-btn:hover {
+  background: #FFE6E2;
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .ingredient-headers {
+    display: none;
+  }
+  .form-ingredient-row {
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+  }
 }
 
 .btn-remove-circle {
