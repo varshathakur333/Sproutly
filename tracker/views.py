@@ -175,14 +175,7 @@ def dashboard(request):
     for slot_key, slot_label in meal_slots_def:
         slot_items = [l for l in today_logs if l.meal_type == slot_key]
         if slot_items:
-            names = []
-            for item in slot_items:
-                if item.recipe:
-                    names.append(item.recipe.title)
-                elif item.ingredient:
-                    names.append(item.ingredient.name)
-                else:
-                    names.append('Meal item')
+            names = [item.display_name for item in slot_items]
             food_text = ', '.join(names)
             cal_sum = round(sum(float(item.snap_calories) for item in slot_items))
             meals_today.append({

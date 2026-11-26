@@ -8,14 +8,8 @@
      role="listitem">
 
   <!-- Food Name -->
-  <div class="food-log-pill__name" title="{% if log.recipe %}{{ log.recipe.title }}{% elif log.ingredient %}{{ log.ingredient.name }}{% endif %}">
-    {% if log.recipe %}
-      {{ log.recipe.title }}
-    {% elif log.ingredient %}
-      {{ log.ingredient.name }}
-    {% else %}
-      Unknown food
-    {% endif %}
+  <div class="food-log-pill__name" title="{{ log.display_name }}">
+    {{ log.display_name }}
   </div>
 
   <!-- Servings Stepper Pill (Yellow pill with - and +) -->

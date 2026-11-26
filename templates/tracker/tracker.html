@@ -128,22 +128,59 @@
       <div class="tracker-card-quick-add" id="quick-add-container">
         <h3 class="tracker-sidebar-card__title">Quick add</h3>
 
-        <div class="quick-add__search-wrap">
-          <input
-            type="search"
-            id="food-search"
-            class="quick-add__input"
-            placeholder="Search recipes or ingredients"
-            autocomplete="off"
-            aria-label="Search recipes or ingredients"
-            aria-autocomplete="list"
-            aria-controls="food-search-results"
-          >
-          <ul class="quick-add__dropdown" id="food-search-results" role="listbox" hidden></ul>
+        <!-- Mode Toggle: Search vs Manual -->
+        <div class="quick-add__mode-toggle" role="tablist" aria-label="Quick add mode">
+          <button type="button" class="quick-add__mode-btn active" id="tab-search" data-mode="search" role="tab" aria-selected="true">
+            🔍 Search
+          </button>
+          <button type="button" class="quick-add__mode-btn" id="tab-manual" data-mode="manual" role="tab" aria-selected="false">
+            ✍ Manual entry
+          </button>
         </div>
 
-        <input type="hidden" id="selected-recipe-id" name="recipe_id">
-        <input type="hidden" id="selected-ingredient-id" name="ingredient_id">
+        <!-- SEARCH PANE -->
+        <div id="pane-search" class="quick-add__pane">
+          <div class="quick-add__search-wrap">
+            <input
+              type="search"
+              id="food-search"
+              class="quick-add__input"
+              placeholder="Search recipes or ingredients"
+              autocomplete="off"
+              aria-label="Search recipes or ingredients"
+              aria-autocomplete="list"
+              aria-controls="food-search-results"
+            >
+            <ul class="quick-add__dropdown" id="food-search-results" role="listbox" hidden></ul>
+          </div>
+          <input type="hidden" id="selected-recipe-id" name="recipe_id">
+          <input type="hidden" id="selected-ingredient-id" name="ingredient_id">
+        </div>
+
+        <!-- MANUAL PANE -->
+        <div id="pane-manual" class="quick-add__pane" style="display: none;">
+          <div class="quick-add__input-wrap">
+            <input
+              type="text"
+              id="manual-food-name"
+              class="quick-add__input"
+              placeholder="Food name (e.g. Avocado Toast)"
+              aria-label="Food name"
+            >
+          </div>
+          <div class="quick-add__calories-wrap">
+            <input
+              type="number"
+              id="manual-calories"
+              class="quick-add__input"
+              placeholder="Calories (e.g. 240)"
+              min="0"
+              step="1"
+              aria-label="Calories in kcal"
+            >
+            <span class="quick-add__calories-unit">kcal</span>
+          </div>
+        </div>
 
         <div class="quick-add__controls-row">
           <select id="quick-meal-type" class="quick-add__meal-select" aria-label="Select meal">
@@ -222,6 +259,52 @@
     });
   }
 
+  // ── Mode switching: Search vs Manual ──────────────────────
+  let currentMode = 'search';
+  const tabSearch = document.getElementById('tab-search');
+  const tabManual = document.getElementById('tab-manual');
+  const paneSearch = document.getElementById('pane-search');
+  const paneManual = document.getElementById('pane-manual');
+
+  function switchMode(mode) {
+    currentMode = mode;
+    if (mode === 'search') {
+      tabSearch.classList.add('active');
+      tabSearch.setAttribute('aria-selected', 'true');
+      tabManual.classList.remove('active');
+      tabManual.setAttribute('aria-selected', 'false');
+      paneSearch.style.display = 'block';
+      paneManual.style.display = 'none';
+      const searchInput = document.getElementById('food-search');
+      if (searchInput) searchInput.focus();
+    } else {
+      tabManual.classList.add('active');
+      tabManual.setAttribute('aria-selected', 'true');
+      tabSearch.classList.remove('active');
+      tabSearch.setAttribute('aria-selected', 'false');
+      paneManual.style.display = 'block';
+      paneSearch.style.display = 'none';
+      const foodNameInput = document.getElementById('manual-food-name');
+      if (foodNameInput) {
+        // If search input had something, carry it over
+        const typed = document.getElementById('food-search')?.value.trim();
+        if (typed && !foodNameInput.value) {
+          foodNameInput.value = typed;
+        }
+        if (foodNameInput.value) {
+          document.getElementById('manual-calories')?.focus();
+        } else {
+          foodNameInput.focus();
+        }
+      }
+    }
+  }
+
+  if (tabSearch && tabManual) {
+    tabSearch.addEventListener('click', () => switchMode('search'));
+    tabManual.addEventListener('click', () => switchMode('manual'));
+  }
+
   // ── "+ add food" button: focuses quick-add with selected meal ───
   document.addEventListener('click', function (e) {
     const addBtn = e.target.closest('[data-action="add-to-meal"]');
@@ -229,12 +312,18 @@
     const mealType = addBtn.dataset.mealType;
     const mealSelect = document.getElementById('quick-meal-type');
     const foodSearch = document.getElementById('food-search');
+    const manualFood = document.getElementById('manual-food-name');
 
     if (mealSelect && mealType) {
       mealSelect.value = mealType;
     }
-    if (foodSearch) {
-      foodSearch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const container = document.getElementById('quick-add-container');
+    if (container) {
+      container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (currentMode === 'manual' && manualFood) {
+      manualFood.focus();
+    } else if (foodSearch) {
       foodSearch.focus();
     }
   });
@@ -259,7 +348,7 @@
             headers: { 'X-CSRFToken': csrfToken }
           });
           const data = await res.json();
-          renderResults(data.results || []);
+          renderResults(data.results || [], q);
         } catch (e) {
           console.error('Search failed', e);
         }
@@ -273,16 +362,32 @@
     });
   }
 
-  function renderResults(results) {
+  function renderResults(results, query) {
     searchResults.innerHTML = '';
+    const qClean = (query || '').trim();
+
     if (!results.length) {
       const li = document.createElement('li');
       li.className = 'quick-add__dropdown-item quick-add__dropdown-item--empty';
-      li.textContent = 'No matching food found';
+      li.textContent = 'No matching food found. ';
+
+      const btnManual = document.createElement('span');
+      btnManual.style.color = '#3E6B27';
+      btnManual.style.textDecoration = 'underline';
+      btnManual.style.cursor = 'pointer';
+      btnManual.textContent = `Enter "${qClean}" manually?`;
+      btnManual.addEventListener('click', () => {
+        switchMode('manual');
+        document.getElementById('manual-food-name').value = qClean;
+        document.getElementById('manual-calories').focus();
+        searchResults.hidden = true;
+      });
+      li.appendChild(btnManual);
       searchResults.appendChild(li);
       searchResults.hidden = false;
       return;
     }
+
     results.forEach(item => {
       const li = document.createElement('li');
       li.className = 'quick-add__dropdown-item';
@@ -298,6 +403,23 @@
       });
       searchResults.appendChild(li);
     });
+
+    // Add manual entry shortcut option at bottom of dropdown
+    if (qClean) {
+      const manualLi = document.createElement('li');
+      manualLi.className = 'quick-add__dropdown-item';
+      manualLi.style.borderTop = '1px dashed #D6CDBC';
+      manualLi.style.color = '#3E6B27';
+      manualLi.textContent = `✍ Enter "${qClean}" manually with calories`;
+      manualLi.addEventListener('click', () => {
+        switchMode('manual');
+        document.getElementById('manual-food-name').value = qClean;
+        document.getElementById('manual-calories').focus();
+        searchResults.hidden = true;
+      });
+      searchResults.appendChild(manualLi);
+    }
+
     searchResults.hidden = false;
   }
 
@@ -307,25 +429,62 @@
 
   if (quickAddBtn) {
     quickAddBtn.addEventListener('click', async function () {
-      const recipeId     = document.getElementById('selected-recipe-id').value;
-      const ingredientId = document.getElementById('selected-ingredient-id').value;
       const servingsInput = document.getElementById('quick-servings');
-      const servings     = parseFloat(servingsInput ? servingsInput.value : '1') || 1;
-      const mealType     = document.getElementById('quick-meal-type').value;
-
-      if (!recipeId && !ingredientId) {
-        quickAddFeedback.textContent = 'Please choose a recipe or ingredient from search.';
-        quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
-        return;
-      }
+      const servings      = parseFloat(servingsInput ? servingsInput.value : '1') || 1;
+      const mealType      = document.getElementById('quick-meal-type').value;
 
       const payload = {
         date: currentDate,
         meal_type: mealType,
         servings: servings,
       };
-      if (recipeId)     payload.recipe     = recipeId;
-      if (ingredientId) payload.ingredient = ingredientId;
+
+      if (currentMode === 'manual') {
+        const foodNameInput = document.getElementById('manual-food-name');
+        const caloriesInput = document.getElementById('manual-calories');
+        const foodName = (foodNameInput?.value || '').trim();
+        const calVal   = (caloriesInput?.value || '').trim();
+
+        if (!foodName) {
+          quickAddFeedback.textContent = 'Please enter a food name.';
+          quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
+          foodNameInput?.focus();
+          return;
+        }
+
+        if (calVal === '' || isNaN(calVal) || Number(calVal) < 0) {
+          quickAddFeedback.textContent = 'Please enter the calories (kcal).';
+          quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
+          caloriesInput?.focus();
+          return;
+        }
+
+        payload.custom_food_name = foodName;
+        payload.custom_calories  = parseFloat(calVal) || 0;
+
+      } else {
+        const recipeId     = document.getElementById('selected-recipe-id').value;
+        const ingredientId = document.getElementById('selected-ingredient-id').value;
+
+        if (!recipeId && !ingredientId) {
+          const typed = (foodSearch?.value || '').trim();
+          if (typed) {
+            // Smoothly switch to manual mode with prefilled name
+            switchMode('manual');
+            document.getElementById('manual-food-name').value = typed;
+            document.getElementById('manual-calories').focus();
+            quickAddFeedback.textContent = `Enter calories for "${typed}" and click Plant it!`;
+            quickAddFeedback.className = 'quick-add-feedback';
+            return;
+          }
+          quickAddFeedback.textContent = 'Please choose a food from search or switch to Manual entry.';
+          quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
+          return;
+        }
+
+        if (recipeId)     payload.recipe     = recipeId;
+        if (ingredientId) payload.ingredient = ingredientId;
+      }
 
       try {
         quickAddBtn.disabled = true;
@@ -343,10 +502,10 @@
         if (res.ok) {
           quickAddFeedback.textContent = 'Planted!';
           quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--success';
-          setTimeout(() => window.location.reload(), 500);
+          setTimeout(() => window.location.reload(), 450);
         } else {
           const err = await res.json();
-          quickAddFeedback.textContent = err.detail || 'Could not plant meal.';
+          quickAddFeedback.textContent = err.detail || (err.non_field_errors && err.non_field_errors[0]) || 'Could not plant meal.';
           quickAddFeedback.className = 'quick-add-feedback quick-add-feedback--error';
           quickAddBtn.disabled = false;
           quickAddBtn.textContent = 'Plant it';

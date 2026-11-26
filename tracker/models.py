@@ -18,6 +18,8 @@ class MealLog(models.Model):
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
     recipe = models.ForeignKey(Recipe, on_delete=models.SET_NULL, null=True, blank=True)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.SET_NULL, null=True, blank=True)
+    custom_food_name = models.CharField(max_length=255, blank=True, default='')
+    custom_calories = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     servings = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('1.0'))
     logged_at = models.DateTimeField(auto_now_add=True)
 
@@ -43,9 +45,18 @@ class MealLog(models.Model):
             models.Index(fields=['user', 'date', 'meal_type']),
         ]
 
+    @property
+    def display_name(self):
+        if self.custom_food_name:
+            return self.custom_food_name
+        if self.recipe:
+            return self.recipe.title
+        if self.ingredient:
+            return self.ingredient.name
+        return 'Unknown food'
+
     def __str__(self):
-        name = self.recipe.title if self.recipe else (self.ingredient.name if self.ingredient else 'Unknown')
-        return f"{self.user.username} - {self.date} {self.meal_type}: {name}"
+        return f"{self.user.username} - {self.date} {self.meal_type}: {self.display_name}"
 
     def save(self, *args, **kwargs):
         self._compute_snapshot()

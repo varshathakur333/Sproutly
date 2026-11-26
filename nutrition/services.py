@@ -167,6 +167,11 @@ def compute_log_nutrients(meal_log) -> dict:
         grams = servings * Decimal('100')
         return ingredient_nutrients_for_grams(meal_log.ingredient, grams)
 
+    if getattr(meal_log, 'custom_food_name', None):
+        cals = Decimal(str(getattr(meal_log, 'custom_calories', 0) or 0)) * servings
+        zeros['calories'] = cals
+        return zeros
+
     return zeros
 
 

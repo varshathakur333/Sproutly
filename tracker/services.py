@@ -56,6 +56,8 @@ def log_meal(
     recipe=None,
     ingredient=None,
     servings: Decimal = Decimal('1'),
+    custom_food_name: str = '',
+    custom_calories: Decimal | None = None,
 ) -> 'MealLog':
     """
     Create and save a MealLog entry.
@@ -63,8 +65,8 @@ def log_meal(
     """
     from tracker.models import MealLog
 
-    if recipe is None and ingredient is None:
-        raise ValueError("Either recipe or ingredient must be provided.")
+    if recipe is None and ingredient is None and not custom_food_name:
+        raise ValueError("Either recipe, ingredient, or custom_food_name must be provided.")
 
     log = MealLog(
         user=user,
@@ -73,6 +75,8 @@ def log_meal(
         recipe=recipe,
         ingredient=ingredient,
         servings=servings,
+        custom_food_name=custom_food_name or '',
+        custom_calories=custom_calories,
     )
     log.save()
     return log
@@ -101,6 +105,8 @@ def copy_log_entry(log, target_date: date, target_meal_type: str | None = None) 
         recipe=log.recipe,
         ingredient=log.ingredient,
         servings=log.servings,
+        custom_food_name=getattr(log, 'custom_food_name', ''),
+        custom_calories=getattr(log, 'custom_calories', None),
     )
     new_log.save()
     return new_log

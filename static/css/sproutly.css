@@ -2362,6 +2362,54 @@ select.form-control {
   box-shadow: 4px 4px 0 #2B2625;
   position: relative;
 }
+.quick-add__mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.quick-add__mode-btn {
+  flex: 1;
+  padding: 6px 10px;
+  background: #F4EEDF;
+  border: 2px solid #2B2625;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2B2625;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.quick-add__mode-btn:hover {
+  background: #EAE2D0;
+}
+.quick-add__mode-btn.active {
+  background: #3E6B27;
+  color: #FFFFFF;
+  box-shadow: 2px 2px 0 #2B2625;
+}
+.quick-add__pane {
+  transition: opacity 0.2s ease;
+}
+.quick-add__input-wrap {
+  margin-bottom: 10px;
+}
+.quick-add__calories-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+.quick-add__calories-unit {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #7A7265;
+  pointer-events: none;
+}
 .quick-add__search-wrap {
   position: relative;
   margin-bottom: 12px;

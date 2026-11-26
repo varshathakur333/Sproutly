@@ -151,6 +151,7 @@ class MealLogSerializer(serializers.ModelSerializer):
             'id', 'date', 'meal_type', 'servings', 'logged_at',
             'recipe', 'recipe_title', 'recipe_slug', 'recipe_image',
             'ingredient', 'ingredient_name',
+            'custom_food_name', 'custom_calories',
             'snap_calories', 'snap_protein', 'snap_carbs', 'snap_fat',
             'snap_fiber', 'snap_iron', 'snap_calcium', 'snap_b12',
             'snap_zinc', 'snap_magnesium', 'snap_vitamin_c', 'snap_sodium',
@@ -163,10 +164,17 @@ class MealLogSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
+        # Support 'calories' alias if sent by clients
+        if 'calories' in self.initial_data and 'custom_calories' not in data:
+            data['custom_calories'] = self.initial_data['calories']
+        if 'food_name' in self.initial_data and 'custom_food_name' not in data:
+            data['custom_food_name'] = self.initial_data['food_name']
+
         recipe = data.get('recipe', getattr(self.instance, 'recipe', None))
         ingredient = data.get('ingredient', getattr(self.instance, 'ingredient', None))
-        if not recipe and not ingredient:
-            raise serializers.ValidationError("Provide either a recipe or an ingredient.")
+        custom_food_name = data.get('custom_food_name', getattr(self.instance, 'custom_food_name', None))
+        if not recipe and not ingredient and not custom_food_name:
+            raise serializers.ValidationError("Provide a recipe, an ingredient, or custom food name.")
         return data
 
     def create(self, validated_data):
